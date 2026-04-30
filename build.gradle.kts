@@ -1,7 +1,9 @@
 plugins {
+    alias(libs.plugins.flyway)
     alias(libs.plugins.kotlin.jvm)
     alias(ktorLibs.plugins.ktor)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.ksp)
 }
 
 group = "com.martdev"
@@ -30,13 +32,31 @@ dependencies {
     implementation(ktorLibs.server.routingOpenapi)
     implementation(ktorLibs.server.statusPages)
     implementation(ktorLibs.server.swagger)
+    implementation(libs.bcrypt)
+    implementation(libs.dotenv)
     implementation(libs.exposed.core)
-    implementation(libs.exposed.r2dbc)
-    implementation(libs.h2database.h2)
-    implementation(libs.h2database.r2dbc)
+    implementation(libs.exposed.dao)
+    implementation(libs.exposed.datetime)
+    implementation(libs.exposed.jdbc)
+    implementation(libs.firebase)
+    implementation(libs.flyway.core)
+    implementation(libs.flyway.postgresql)
+    implementation(libs.hikariCP)
+    implementation(libs.koin.annotation)
+    implementation(libs.koin.ktor)
+    implementation(libs.koin.logger)
     implementation(libs.logback.classic)
     implementation(libs.postgresql)
+    implementation(libs.stytch)
+    implementation(libs.testcontainers)
+    implementation(libs.testcontainers.postgresql)
+
+    ksp(libs.koin.annotation.compiler)
 
     testImplementation(kotlin("test"))
     testImplementation(ktorLibs.server.testHost)
+    testImplementation(libs.junit)
+    testImplementation(libs.koin.test)
+    testImplementation(libs.koin.test.junit)
+    testImplementation(libs.mockK)
 }

@@ -1,18 +1,46 @@
 [versions]
+bcrypt = "0.10.2"
+dotenv = "6.5.1"
 exposed = "1.2.0"
-h2 = "2.4.240"
+firebase = "9.8.0"
+flyway = "10.15.0"
+hikariCP = "4.0.3"
+koin = "4.2.1"
+koin_annotation = "2.3.0"
 kotlin = "2.3.20"
 logback = "1.5.21"
+mockk = "1.14.9"
+postgresql = "42.7.10"
+stytch = "6.0.0"
+testcontainer = "2.0.4"
 
 [libraries]
+bcrypt = { module = "at.favre.lib:bcrypt", version.ref = "bcrypt" }
+dotenv = { module = "io.github.cdimascio:dotenv-kotlin", version.ref = "dotenv" }
 exposed-core = { module = "org.jetbrains.exposed:exposed-core", version.ref = "exposed" }
-exposed-r2dbc = { module = "org.jetbrains.exposed:exposed-r2dbc", version.ref = "exposed" }
-h2database-h2 = { module = "com.h2database:h2", version.ref = "h2" }
-h2database-r2dbc = { module = "io.r2dbc:r2dbc-h2", version = "1.1.0.RELEASE" }
+exposed-dao = { module = "org.jetbrains.exposed:exposed-dao", version.ref = "exposed" }
+exposed-datetime = { module = "org.jetbrains.exposed:exposed-kotlin-datetime", version.ref = "exposed" }
+exposed-jdbc = { module = "org.jetbrains.exposed:exposed-jdbc", version.ref = "exposed" }
+firebase = { module = "com.google.firebase:firebase-admin", version.ref = "firebase" }
+flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway"}
+flyway-postgresql = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flyway" }
+hikariCP = { module = "com.zaxxer:HikariCP", version.ref = "hikariCP"}
+junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin"}
+koin-annotation = { module = "io.insert-koin:koin-annotations", version.ref = "koin_annotation" }
+koin-annotation_compiler = { module = "io.insert-koin:koin-ksp-compiler"}
+koin-ktor = { module = "io.insert-koin:koin-ktor", version.ref = "koin"}
+koin-logger = { module = "io.insert-koin:koin-logger-slf4j", version.ref = "koin"}
+koin-test = { module = "io.insert-koin:koin-test", version.ref = "koin" }
+koin-test-junit = { module = "io.insert-koin:koin-test-junit4", version.ref = "koin" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
-postgresql = { module = "org.postgresql:postgresql", version = "42.7.10" }
+mockK = { module = "io.mockk:mockk", version.ref = "mockk"}
+postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
+stytch = { module = "com.stytch.java:sdk", version.ref = "stytch" }
+testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainer"}
+testcontainers-postgresql = { module = "org.testcontainers:testcontainers-postgresql", version.ref = "testcontainer"}
 
 [plugins]
+flyway = { id = "org.flywaydb.flyway", version.ref = "flyway" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
-kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version = "2.3.6" }
