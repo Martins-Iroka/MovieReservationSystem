@@ -9,6 +9,4 @@ ktor:
       - com.martdev.SecurityKt.configureSecurity
       - com.martdev.RequestValidationKt.configureRequestValidation
       - com.martdev.StatusPagesKt.configureStatusPages
-      - com.martdev.ExposedKt.configureExposed
-      - com.martdev.PostgresKt.configurePostgres
       - com.martdev.RoutingKt.configureRouting
