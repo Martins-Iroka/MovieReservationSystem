@@ -1,4 +1,4 @@
-package com.martdev
+package com.martdev.plugins
 
 import io.ktor.server.application.*
 import io.ktor.server.plugins.requestvalidation.RequestValidation

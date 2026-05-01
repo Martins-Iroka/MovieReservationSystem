@@ -9,7 +9,7 @@ services:
     volumes:
       - movie-db-data:/var/lib/postgresql/data
     ports:
-      - "5433:5435"
+      - "5435:5432"
     restart: unless-stopped
 
 volumes:

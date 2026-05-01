@@ -3,10 +3,22 @@ ktor:
     port: 8080
   application:
     modules:
-      - com.martdev.HttpKt.configureHttp
-      - com.martdev.MonitoringKt.configureMonitoring
-      - com.martdev.SerializationKt.configureSerialization
-      - com.martdev.SecurityKt.configureSecurity
-      - com.martdev.RequestValidationKt.configureRequestValidation
-      - com.martdev.StatusPagesKt.configureStatusPages
-      - com.martdev.RoutingKt.configureRouting
+      - com.martdev.ApplicationKt.module
+
+database:
+  address: ${DB_ADDR}
+  maxOpenCons: ${DB_MAX_OPEN_CONNS}
+  maxIdleCons: ${DB_MAX_IDLE_CONNS}
+  maxIdleTime: ${DB_MAX_IDLE_TIME}
+  user: ${DB_USER}
+  password: ${DB_PASSWORD}
+
+stytch:
+  stytchID: ${STYTCH_PROJECT_ID}
+  stytchSecret: ${STYTCH_SECRET}
+
+jwt:
+  secret: ${JWT_SECRET}
+  issuer: ${JWT_ISSUER}
+  audience: ${JWT_AUDIENCE}
+  expirationMinutes: ${JWT_EXPIRATION}
