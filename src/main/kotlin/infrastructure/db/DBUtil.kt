@@ -19,7 +19,7 @@ suspend fun <T> withTopLevelSuspendTransaction(block: suspend JdbcTransaction.()
                 } catch (e: ExposedSQLException) {
                     handleDbException(e)
                 } catch (e: Exception) {
-                    DataResult.Failure.UnknownError(e)
+                    DataResult.Failure.UnknownError(e.stackTraceToString())
                 }
             }
         } catch (_: ExposedSQLException) {
@@ -27,7 +27,7 @@ suspend fun <T> withTopLevelSuspendTransaction(block: suspend JdbcTransaction.()
             // an exception thrown was BatchUpdateException(23514)
             DataResult.Failure.UniqueViolation
         } catch (e: Exception) {
-            DataResult.Failure.UnknownError(e)
+            DataResult.Failure.UnknownError(e.stackTraceToString())
         }
     }
 
@@ -41,7 +41,7 @@ suspend fun <T> withSuspendTransaction(block: suspend JdbcTransaction.() -> Data
                 } catch (e: ExposedSQLException) {
                     handleDbException(e)
                 } catch (e: Exception) {
-                    DataResult.Failure.UnknownError(e)
+                    DataResult.Failure.UnknownError(e.stackTraceToString())
                 }
             }
         } catch (_: ExposedSQLException) {
@@ -49,7 +49,7 @@ suspend fun <T> withSuspendTransaction(block: suspend JdbcTransaction.() -> Data
             // an exception thrown was BatchUpdateException(23514)
             DataResult.Failure.UniqueViolation
         } catch (e: Exception) {
-            DataResult.Failure.UnknownError(e)
+            DataResult.Failure.UnknownError(e.stackTraceToString())
         }
     }
 
@@ -57,6 +57,6 @@ fun handleDbException(e: ExposedSQLException): DataResult.Failure {
     return when (e.sqlState) {
         "23505" -> DataResult.Failure.UniqueViolation
         "23503" -> DataResult.Failure.ForeignKeyViolation
-        else -> DataResult.Failure.UnknownError(e)
+        else -> DataResult.Failure.UnknownError(e.stackTraceToString())
     }
 }

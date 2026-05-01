@@ -11,7 +11,7 @@ interface UserRepository {
     suspend fun deleteExpiredRefreshToken(): DataResult<Unit>
     suspend fun getUserByEmail(email: String): DataResult<User>
     suspend fun getUserById(userId: Long): DataResult<User>
-    suspend fun getUserIdAndRoleByRefreshToken(tokenHash: String): DataResult<Unit>
+    suspend fun getUserIdAndRoleByRefreshToken(tokenHash: String): DataResult<User>
     suspend fun revokeRefreshToken(tokenHash: String): DataResult<Unit>
-    suspend fun deleteAndCreateVerificationToken(token: String, userId: Long)
+    suspend fun deleteAndCreateVerificationToken(token: String, userId: Long): DataResult<Unit>
 }
