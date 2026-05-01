@@ -3,7 +3,7 @@ CREATE EXTENSION IF NOT EXISTS citext;
 CREATE TYPE role_data AS ENUM ('USER', 'ADMIN');
 
 CREATE TABLE IF NOT EXISTS users(
-    id bigint PRIMARY KEY,
+    id BIGINT PRIMARY KEY,
     email citext UNIQUE NOT NULL,
     password TEXT NOT NULL,
     is_verified BOOLEAN NOT NULL DEFAULT FALSE,
