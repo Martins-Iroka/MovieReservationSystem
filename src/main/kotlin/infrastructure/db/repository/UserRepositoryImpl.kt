@@ -13,6 +13,8 @@ import com.martdev.infrastructure.db.tables.user.UserVerificationTable.token
 import com.martdev.infrastructure.db.tables.user.toUserModel
 import com.martdev.infrastructure.db.withSuspendTransaction
 import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.dao.id.CompositeID
@@ -23,6 +25,8 @@ import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.select
 import org.koin.core.annotation.Single
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.hours
 
 @Single
 class UserRepositoryImpl : UserRepository {
@@ -130,6 +134,15 @@ class UserRepositoryImpl : UserRepository {
 
     override suspend fun deleteAndCreateVerificationToken(token: String, userId: Long): DataResult<Unit> {
         return withSuspendTransaction {
+            deleteUserVerificationToken(userId)
+            val entity = UserEntity.findById(userId) ?: return@withSuspendTransaction DataResult.Failure.NotFound
+            createUserVerificationToken(token, entity)
+            DataResult.Success(Unit)
+        }
+    }
+
+    override suspend fun deleteUserAndVerificationToken(userId: Long): DataResult<Unit> {
+        return withSuspendTransaction {
             val deletedRow = deleteUser(userId)
             if (deletedRow == 0) {
                 return@withSuspendTransaction DataResult.Failure.NotFound
@@ -149,7 +162,7 @@ class UserRepositoryImpl : UserRepository {
         otherColumn = UserVerificationTable.userId
     ).select(UserTable.id)
         .where {
-            UserVerificationTable.token eq token
+            (UserVerificationTable.token eq token) and (UserVerificationTable.expiresAt greater CurrentDateTime)
         }.firstOrNull()?.get(UserTable.id)?.value
 
     private fun updateIsVerifiedInUser(userId: Long) = UserEntity.findByIdAndUpdate(userId) {
@@ -172,6 +185,7 @@ class UserRepositoryImpl : UserRepository {
         }
         UserVerificationEntity.new(userVerificationId) {
             userId = uid
+            expiresAt = Clock.System.now().plus(24.hours).toLocalDateTime(TimeZone.currentSystemDefault())
         }
     }
 

@@ -11,12 +11,23 @@ import org.jetbrains.exposed.v1.dao.LongEntity
 import org.jetbrains.exposed.v1.dao.LongEntityClass
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
+import org.postgresql.util.PGobject
 
 object UserTable : LongIdTable("users") {
     val email = citext("email").uniqueIndex()
     val password = text("password")
     val isVerified = bool("is_verified").default(false)
-    val role = enumeration<Role>("role").default(Role.USER)
+    val role = customEnumeration(
+        name = "role",
+        sql = "role_data",
+        fromDb = {value -> Role::class.java.enumConstants.first { it.name == value }},
+        toDb = { value ->
+            PGobject().apply {
+                type = "role_data"
+                this.value = value.name
+            }
+        }
+    ).default(Role.USER)
     val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)
 }
 

@@ -19,5 +19,5 @@ class UserVerificationEntity(id: EntityID<CompositeID>) : CompositeEntity(id) {
     companion object : CompositeEntityClass<UserVerificationEntity>(UserVerificationTable)
 
     var userId by UserEntity referencedOn UserVerificationTable.userId
-    val expiresAt by UserVerificationTable.expiresAt
+    var expiresAt by UserVerificationTable.expiresAt
 }
