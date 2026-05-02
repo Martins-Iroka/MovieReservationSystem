@@ -42,7 +42,7 @@ suspend fun <T> withSuspendTransaction(block: suspend JdbcTransaction.() -> Data
     withContext(Dispatchers.IO) {
         try {
             suspendTransaction {
-                addLogger(CustomLogger)
+                addLogger(StdOutSqlLogger)
                 try {
                     block()
                 } catch (e: ExposedSQLException) {
@@ -65,14 +65,5 @@ fun handleDbException(e: ExposedSQLException): DataResult.Failure {
         "23505" -> DataResult.Failure.UniqueViolation
         "23503" -> DataResult.Failure.ForeignKeyViolation
         else -> DataResult.Failure.UnknownError(e.stackTraceToString())
-    }
-}
-
-object CustomLogger : SqlLogger {
-    override fun log(
-        context: StatementContext,
-        transaction: Transaction
-    ) {
-        println("${Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())} SQL: ${context.expandArgs(transaction)}")
     }
 }
