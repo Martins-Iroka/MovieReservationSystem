@@ -48,7 +48,7 @@ dependencies {
     implementation(libs.logback.classic)
     implementation(libs.postgresql)
     implementation(libs.stytch)
-    implementation(libs.testcontainers)
+//    implementation(libs.testcontainers)
     implementation(libs.testcontainers.postgresql)
 
     ksp(libs.koin.annotation.compiler)
@@ -56,7 +56,13 @@ dependencies {
     testImplementation(kotlin("test"))
     testImplementation(ktorLibs.server.testHost)
     testImplementation(libs.junit)
+    testImplementation(libs.junit5)
     testImplementation(libs.koin.test)
     testImplementation(libs.koin.test.junit)
     testImplementation(libs.mockK)
+    testImplementation(libs.testcontainers.junit5)
+}
+
+tasks.test {
+    useJUnitPlatform()
 }

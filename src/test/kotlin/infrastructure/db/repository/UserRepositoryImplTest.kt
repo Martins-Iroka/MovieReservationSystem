@@ -3,91 +3,149 @@ package com.martdev.infrastructure.db.repository
 import com.martdev.domain.DataResult
 import com.martdev.domain.model.User
 import com.martdev.domain.repository.UserRepository
-import kotlinx.coroutines.flow.MutableStateFlow
+import com.martdev.infrastructure.db.tables.user.UserRefreshTokenTable
+import com.martdev.infrastructure.db.tables.user.UserTable
+import com.martdev.infrastructure.db.tables.user.UserVerificationTable
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import org.junit.AfterClass
-import org.junit.Before
-import org.junit.BeforeClass
-import org.junit.Test
+import org.flywaydb.core.Flyway
+import org.jetbrains.exposed.v1.jdbc.Database
+import org.jetbrains.exposed.v1.jdbc.deleteAll
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.MethodOrderer
+import org.junit.jupiter.api.Order
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestMethodOrder
+import org.testcontainers.junit.jupiter.Container
+import org.testcontainers.junit.jupiter.Testcontainers
+import org.testcontainers.postgresql.PostgreSQLContainer
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
-var user = User(
-    email = "testEmail@gmail.com",
-    password = "password",
-)
+@TestMethodOrder(MethodOrderer.OrderAnnotation::class)
+@Testcontainers
 class UserRepositoryImplTest {
 
     private lateinit var repository: UserRepository
 
+
     companion object {
         const val VERIFICATION_TOKEN = "verification_token"
         const val REFRESH_TOKEN = "refresh_token"
-        val userFlow = MutableStateFlow(User())
-        @BeforeClass
+        var user = User(
+            email = "testEmail@gmail.com",
+            password = "password",
+        )
+        @Container
+        val postgres: PostgreSQLContainer = PostgreSQLContainer(
+            "postgres:16-alpine"
+        ).apply {
+            withDatabaseName("mrs")
+            withUsername("test")
+            withPassword("test")
+        }
+        fun connectAndMigrate(): Database {
+            Flyway.configure()
+                .dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
+                .load().migrate()
+
+            return Database.connect(
+                url = postgres.jdbcUrl,
+                driver = "org.postgresql.Driver",
+                user = postgres.username,
+                password = postgres.password
+            )
+        }
         @JvmStatic
-        fun startContainer() {
-            postgres.start()
-            connectAndMigrate()
+        @AfterAll
+        fun clearDb() {
+            transaction {
+                UserRefreshTokenTable.deleteAll()
+                UserVerificationTable.deleteAll()
+                UserTable.deleteAll()
+            }
         }
 
-        @AfterClass
         @JvmStatic
-        fun stopContainer() {
-            postgres.stop()
+        @BeforeAll
+        fun setupContainer() {
+            connectAndMigrate()
         }
     }
 
-    @Before
+    @BeforeEach
     fun setup() {
         repository = UserRepositoryImpl()
     }
 
     @Test
+    @Order(1)
     fun `save user and verification token should return data result user`() = runTest {
         val savedUser = repository.saveUserAndVerificationToken(user, VERIFICATION_TOKEN)
 
-        assertTrue(savedUser is DataResult.Success, savedUser.toString())
+        assertTrue(savedUser is DataResult.Success)
         user = user.copy(id = savedUser.value.id)
     }
 
     @Test
-    fun `get user by id`() = runTest {
-        val userResult = repository.getUserById(user.id)
-        assertTrue(userResult is DataResult.Success)
-        user = userResult.value
+    @Order(2)
+    fun `save user with same email should fail`() = runTest {
+        val savedUser = repository.saveUserAndVerificationToken(user, VERIFICATION_TOKEN)
+
+        assertTrue(savedUser is DataResult.Failure.UniqueViolation)
     }
 
     @Test
+    @Order(3)
+    fun `save user verification with same token should fail`() = runTest {
+        val savedUser = repository.saveUserAndVerificationToken(user.copy(email = "test2@gmail.com"), VERIFICATION_TOKEN)
+
+        assertTrue(savedUser is DataResult.Failure.UniqueViolation)
+    }
+
+    @Test
+    @Order(4)
+    fun `get user by id`() = runTest {
+        val userResult = repository.getUserById(user.id)
+        assertTrue(userResult is DataResult.Success)
+    }
+
+    @Test
+    @Order(5)
     fun `test user activation`() = runTest {
         val result = repository.activateUser(VERIFICATION_TOKEN)
         assertTrue(result is DataResult.Success)
     }
 
     @Test
+    @Order(6)
     fun `test save refresh token`() = runTest {
-        println(user)
         val result = repository.saveRefreshToken(
             user.id,
             REFRESH_TOKEN,
-            Clock.System.now().plus(5.milliseconds).toLocalDateTime(TimeZone.currentSystemDefault())
+            Clock.System.now().plus(1.seconds).toLocalDateTime(TimeZone.currentSystemDefault())
         )
 
         assertTrue(result is DataResult.Success, result.toString())
     }
 
     @Test
+    @Order(7)
     fun `test get user id and role by refresh token`() = runTest {
         val result = repository.getUserIdAndRoleByRefreshToken(REFRESH_TOKEN)
-        assertTrue(result is DataResult.Success)
+        assertTrue(result is DataResult.Success, result.toString())
         assertEquals(user.id, result.value.id)
     }
 
     @Test
+    @Order(8)
     fun `should get user by email`() = runTest {
         val result = repository.getUserByEmail(user.email)
         assertTrue(result is DataResult.Success)
@@ -95,18 +153,21 @@ class UserRepositoryImplTest {
     }
 
     @Test
+    @Order(9)
     fun `should revoke refresh token`() = runTest {
         val result = repository.revokeRefreshToken(REFRESH_TOKEN)
-        assertTrue(result is DataResult.Success)
+        assertTrue(result is DataResult.Success, result.toString())
     }
 
     @Test
+    @Order(10)
     fun `should delete expired refresh token`() = runTest {
         val result = repository.deleteExpiredRefreshToken()
         assertTrue(result is DataResult.Success)
     }
 
     @Test
+    @Order(11)
     fun `should delete and create verification token`() = runTest {
         val result = repository.deleteAndCreateVerificationToken(VERIFICATION_TOKEN, user.id)
         assertTrue(result is DataResult.Success)

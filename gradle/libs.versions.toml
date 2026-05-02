@@ -5,6 +5,7 @@ exposed = "1.2.0"
 firebase = "9.8.0"
 flyway = "10.15.0"
 hikariCP = "4.0.3"
+junit5 = "5.11.4"
 koin = "4.2.1"
 koin_annotation = "2.3.0"
 kotlin = "2.3.20"
@@ -12,7 +13,7 @@ logback = "1.5.21"
 mockk = "1.14.9"
 postgresql = "42.7.10"
 stytch = "6.0.0"
-testcontainer = "2.0.4"
+testcontainer = "2.0.5"
 
 [libraries]
 bcrypt = { module = "at.favre.lib:bcrypt", version.ref = "bcrypt" }
@@ -25,7 +26,8 @@ firebase = { module = "com.google.firebase:firebase-admin", version.ref = "fireb
 flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway"}
 flyway-postgresql = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flyway" }
 hikariCP = { module = "com.zaxxer:HikariCP", version.ref = "hikariCP"}
-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin"}
+junit = { module = "org.jetbrains.kotlin:kotlin-test-junit5", version.ref = "kotlin"}
+junit5 = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit5"}
 koin-annotation = { module = "io.insert-koin:koin-annotations", version.ref = "koin_annotation" }
 koin-annotation_compiler = { module = "io.insert-koin:koin-ksp-compiler", version.ref = "koin_annotation"}
 koin-ktor = { module = "io.insert-koin:koin-ktor", version.ref = "koin"}
@@ -36,7 +38,8 @@ logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "lo
 mockK = { module = "io.mockk:mockk", version.ref = "mockk"}
 postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
 stytch = { module = "com.stytch.java:sdk", version.ref = "stytch" }
-testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainer"}
+#testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainer"}
+testcontainers-junit5 = { module = "org.testcontainers:testcontainers-junit-jupiter", version.ref = "testcontainer" }
 testcontainers-postgresql = { module = "org.testcontainers:testcontainers-postgresql", version.ref = "testcontainer"}
 
 [plugins]
