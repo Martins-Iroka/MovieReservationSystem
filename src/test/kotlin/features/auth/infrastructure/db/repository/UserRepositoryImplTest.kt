@@ -1,7 +1,7 @@
 package com.martdev.features.auth.infrastructure.db.repository
 
-import com.martdev.domain.model.User
-import com.martdev.domain.repository.UserRepository
+import com.martdev.features.auth.domain.model.User
+import com.martdev.features.auth.domain.repository.UserRepository
 import com.martdev.features.auth.infrastructure.db.tables.UserRefreshTokenTable
 import com.martdev.features.auth.infrastructure.db.tables.UserTable
 import com.martdev.features.auth.infrastructure.db.tables.UserVerificationTable

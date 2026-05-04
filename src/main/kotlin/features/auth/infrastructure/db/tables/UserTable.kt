@@ -1,7 +1,7 @@
 package com.martdev.features.auth.infrastructure.db.tables
 
-import com.martdev.domain.model.Role
-import com.martdev.domain.model.User
+import com.martdev.features.auth.domain.model.Role
+import com.martdev.features.auth.domain.model.User
 import org.jetbrains.exposed.v1.core.dao.id.EntityID
 import org.jetbrains.exposed.v1.core.dao.id.LongIdTable
 import org.jetbrains.exposed.v1.dao.LongEntity
@@ -9,6 +9,7 @@ import org.jetbrains.exposed.v1.dao.LongEntityClass
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
 import org.postgresql.util.PGobject
+import kotlin.jvm.java
 
 object UserTable : LongIdTable("users") {
     val email = citext("email").uniqueIndex()

@@ -1,7 +1,7 @@
 package com.martdev.features.auth.domain.repository
 
 import com.martdev.shared.domain.model.DataResult
-import com.martdev.domain.model.User
+import com.martdev.features.auth.domain.model.User
 import kotlinx.datetime.LocalDateTime
 
 interface UserRepository {
