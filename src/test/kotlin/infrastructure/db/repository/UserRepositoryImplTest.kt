@@ -22,7 +22,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.hours
-import kotlin.time.Duration.Companion.seconds
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 @Testcontainers
