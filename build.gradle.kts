@@ -48,7 +48,6 @@ dependencies {
     implementation(libs.logback.classic)
     implementation(libs.postgresql)
     implementation(libs.stytch)
-//    implementation(libs.testcontainers)
     implementation(libs.testcontainers.postgresql)
 
     ksp(libs.koin.annotation.compiler)
