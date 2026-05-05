@@ -42,7 +42,7 @@ class UserServiceImpl(
                 }
                 UserData(
                     emailId = emailId,
-                    token = token
+                    registrationToken = token
                 )
             }
 
@@ -56,7 +56,7 @@ class UserServiceImpl(
             println(errorMessage) //replace with a logger
             throw BadRequestException("Invalid or expired OTP")
         }
-        val result = repository.activateUser(userData.token)
+        val result = repository.activateUser(userData.registrationToken)
         if (result is DataResult.Failure) {
             if (result is DataResult.Failure.NotFound) {
                 throw NotFoundException("Invalid or expired verification token")

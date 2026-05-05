@@ -11,19 +11,15 @@ import com.martdev.shared.domain.exception.InternalServerException
 import com.martdev.shared.domain.exception.NotFoundException
 import com.martdev.shared.domain.exception.UnauthorizedException
 import com.martdev.shared.domain.model.DataResult
-import io.ktor.client.request.request
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
-import io.mockk.junit4.MockKRule
 import io.mockk.junit5.MockKExtension
 import kotlinx.coroutines.test.runTest
-import org.junit.Rule
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 @ExtendWith(MockKExtension::class)
@@ -55,7 +51,7 @@ class UserServiceImplTest {
         role = Role.USER,
         code = "123456",
         emailId = "emailId",
-        token = "token",
+        registrationToken = "token",
         isVerified = true,
         refreshToken = "refresh_token"
     )
@@ -92,7 +88,7 @@ class UserServiceImplTest {
         val result = service.registerUser(user)
 
         assertEquals("emailId", result.emailId)
-        assertTrue(result.token.isNotEmpty())
+        assertTrue(result.registrationToken.isNotEmpty())
     }
 
     @Test
@@ -170,7 +166,7 @@ class UserServiceImplTest {
         coEvery {
             repository.activateUser(capture(tokenSlot))
         } answers {
-            assertEquals(user.token, tokenSlot.captured)
+            assertEquals(user.registrationToken, tokenSlot.captured)
             DataResult.Success(Unit)
         }
 

@@ -9,7 +9,7 @@ data class UserData(
     val emailId: String = "",
     val status: String = "",
     val code: String = "",
-    val token: String = "",
+    val registrationToken: String = "",
     val accessToken: String = "",
     val refreshToken: String = "",
     val verificationToken: String = "",
