@@ -1,7 +1,6 @@
 package com.martdev.features.auth.api
 
 import com.martdev.features.auth.api.request.CreateUserRequest
-import com.martdev.features.auth.api.request.RefreshTokenRequest
 import com.martdev.features.auth.api.request.UserLoginRequest
 import com.martdev.features.auth.api.request.UserVerificationRequest
 import com.martdev.features.auth.api.response.CreateUserResponse

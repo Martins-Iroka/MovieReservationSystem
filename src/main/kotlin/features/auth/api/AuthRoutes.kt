@@ -1,21 +1,13 @@
 package com.martdev.features.auth.api
 
-import com.martdev.features.auth.api.request.CreateUserRequest
-import com.martdev.features.auth.api.request.RefreshTokenRequest
-import com.martdev.features.auth.api.request.ResendOTPRequest
-import com.martdev.features.auth.api.request.UserLoginRequest
-import com.martdev.features.auth.api.request.UserVerificationRequest
-import com.martdev.features.auth.api.response.RefreshTokenResponse
+import com.martdev.features.auth.api.request.*
 import com.martdev.features.auth.domain.service.UserService
 import com.martdev.shared.api.DataResponse
-import io.ktor.http.HttpStatusCode
-import io.ktor.server.plugins.ratelimit.RateLimitName
-import io.ktor.server.plugins.ratelimit.rateLimit
-import io.ktor.server.request.receive
-import io.ktor.server.response.respond
-import io.ktor.server.routing.Route
-import io.ktor.server.routing.post
-import io.ktor.server.routing.route
+import io.ktor.http.*
+import io.ktor.server.plugins.ratelimit.*
+import io.ktor.server.request.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
 import org.koin.ktor.ext.inject
 
 const val authenticationPath = "/authentication"
