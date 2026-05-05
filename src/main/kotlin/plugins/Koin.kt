@@ -5,6 +5,7 @@ import com.martdev.config.JWTConfig
 import com.martdev.config.StytchConfig
 import io.ktor.server.application.*
 import org.koin.dsl.module
+import org.koin.ksp.generated.com_martdev_AppModule
 import org.koin.ktor.plugin.Koin
 import org.koin.logger.slf4jLogger
 
@@ -17,6 +18,6 @@ fun Application.configureKoin() {
 
     install(Koin) {
         slf4jLogger()
-        modules(configModule)
+        modules(com_martdev_AppModule, configModule)
     }
 }

@@ -1,19 +1,8 @@
 package com.martdev
 
-import com.martdev.plugins.configureBackgroundJobs
-import com.martdev.plugins.configureCallLogging
-import com.martdev.plugins.configureDatabase
-import com.martdev.plugins.configureHttp
-import com.martdev.plugins.configureKoin
-import com.martdev.plugins.configureMonitoring
-import com.martdev.plugins.configureRateLimiter
-import com.martdev.plugins.configureRequestValidation
-import com.martdev.plugins.configureRouting
-import com.martdev.plugins.configureSecurity
-import com.martdev.plugins.configureSerialization
-import com.martdev.plugins.configureStatusPages
+import com.martdev.plugins.*
 import io.github.cdimascio.dotenv.dotenv
-import io.ktor.server.application.Application
+import io.ktor.server.application.*
 
 fun main(args: Array<String>) {
     dotenv {
@@ -24,15 +13,15 @@ fun main(args: Array<String>) {
 
 fun Application.module() {
     configureKoin()
-    configureBackgroundJobs()
     configureCallLogging()
+    configureHttp()
     configureDatabase()
     configureSecurity()
     configureSerialization()
     configureStatusPages()
-    configureHttp()
     configureMonitoring()
     configureRateLimiter()
     configureRouting()
     configureRequestValidation()
+    configureBackgroundJobs()
 }

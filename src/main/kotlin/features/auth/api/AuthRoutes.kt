@@ -21,7 +21,6 @@ const val resendOTPPath = "/resend-otp"
 fun Route.authRoutes() {
     val service by inject<UserService>()
     route(authenticationPath) {
-
         /**
          * Tag: authentication
          *
