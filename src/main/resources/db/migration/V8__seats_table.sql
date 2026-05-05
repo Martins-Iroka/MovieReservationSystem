@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS seats(
-    id BIGINT PRIMARY KEY,
-    room_id BIGINT NOT NULL,
+    id INT PRIMARY KEY,
+    room_id INT NOT NULL,
     row_label TEXT NOT NULL,
     seat_number INT NOT NULL,
 
