@@ -1,16 +1,14 @@
 package com.martdev.plugins
 
+import com.martdev.features.auth.api.authRoutes
 import io.ktor.server.application.*
-import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
+const val apiV1Path = "/v1/api"
 fun Application.configureRouting() {
     routing {
-        get("/") {
-            call.respondText("Hello, World!")
-        }
-        get("/json/kotlinx-serialization") {
-            call.respond(mapOf("hello" to "world"))
+        route(apiV1Path) {
+            authRoutes()
         }
     }
 }
