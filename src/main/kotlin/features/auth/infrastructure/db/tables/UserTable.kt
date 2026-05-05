@@ -1,7 +1,7 @@
 package com.martdev.features.auth.infrastructure.db.tables
 
 import com.martdev.features.auth.domain.model.Role
-import com.martdev.features.auth.domain.model.User
+import com.martdev.features.auth.domain.model.UserData
 import org.jetbrains.exposed.v1.core.dao.id.EntityID
 import org.jetbrains.exposed.v1.core.dao.id.LongIdTable
 import org.jetbrains.exposed.v1.dao.LongEntity
@@ -38,7 +38,7 @@ class UserEntity(id: EntityID<Long>) : LongEntity(id) {
     var role by UserTable.role
 }
 
-fun UserEntity.toUserModel() = User(
+fun UserEntity.toUserModel() = UserData(
     id.value,
     email,
     password,

@@ -1,6 +1,6 @@
 package com.martdev.features.auth.infrastructure.db.repository
 
-import com.martdev.features.auth.domain.model.User
+import com.martdev.features.auth.domain.model.UserData
 import com.martdev.features.auth.domain.repository.UserRepository
 import com.martdev.features.auth.infrastructure.db.tables.UserRefreshTokenTable
 import com.martdev.features.auth.infrastructure.db.tables.UserTable
@@ -33,7 +33,7 @@ class UserRepositoryImplTest {
     companion object {
         const val VERIFICATION_TOKEN = "verification_token"
         const val REFRESH_TOKEN = "refresh_token"
-        var user = User(
+        var user = UserData(
             email = "testEmail@gmail.com",
             password = "password",
         )

@@ -1,6 +1,6 @@
 package com.martdev.features.auth.infrastructure.db.repository
 
-import com.martdev.features.auth.domain.model.User
+import com.martdev.features.auth.domain.model.UserData
 import com.martdev.features.auth.domain.repository.UserRepository
 import com.martdev.features.auth.infrastructure.db.tables.*
 import com.martdev.shared.domain.model.DataResult
@@ -34,9 +34,9 @@ class UserRepositoryImpl : UserRepository {
     }
 
     override suspend fun saveUserAndVerificationToken(
-        user: User,
+        user: UserData,
         token: String
-    ): DataResult<User> {
+    ): DataResult<UserData> {
         return withSuspendTransaction {
             val userEntity = createUser(user)
             createUserVerificationToken(token, userEntity)
@@ -72,7 +72,7 @@ class UserRepositoryImpl : UserRepository {
         }
     }
 
-    override suspend fun getUserByEmail(email: String): DataResult<User> {
+    override suspend fun getUserByEmail(email: String): DataResult<UserData> {
         return withSuspendTransaction {
             val entity = UserEntity.find {
                 UserTable.email eq email
@@ -82,7 +82,7 @@ class UserRepositoryImpl : UserRepository {
         }
     }
 
-    override suspend fun getUserById(userId: Long): DataResult<User> {
+    override suspend fun getUserById(userId: Long): DataResult<UserData> {
         return withSuspendTransaction {
             val entity = UserEntity.findById(userId) ?: return@withSuspendTransaction DataResult.Failure.NotFound
 
@@ -90,7 +90,7 @@ class UserRepositoryImpl : UserRepository {
         }
     }
 
-    override suspend fun getUserIdAndRoleByRefreshToken(tokenHash: String): DataResult<User> {
+    override suspend fun getUserIdAndRoleByRefreshToken(tokenHash: String): DataResult<UserData> {
         return withSuspendTransaction {
             val row = UserTable.join(
                 otherTable = UserRefreshTokenTable,
@@ -106,7 +106,7 @@ class UserRepositoryImpl : UserRepository {
             val userId = row[UserTable.id].value
             val role = row[UserTable.role]
 
-            DataResult.Success(User(id = userId, role = role))
+            DataResult.Success(UserData(id = userId, role = role))
         }
     }
 
@@ -163,7 +163,7 @@ class UserRepositoryImpl : UserRepository {
         UserVerificationTable.userId eq userId
     }
 
-    private fun createUser(user: User) = UserEntity.new {
+    private fun createUser(user: UserData) = UserEntity.new {
         email = user.email
         password = user.password
         role = user.role
