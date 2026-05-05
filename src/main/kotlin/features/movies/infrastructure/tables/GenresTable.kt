@@ -13,4 +13,5 @@ class GenreEntity(id: EntityID<Int>) : IntEntity(id) {
     companion object : IntEntityClass<GenreEntity>(GenresTable)
 
     var name by GenresTable.name
+    val movies by MoviesEntity via MovieGenreTable
 }

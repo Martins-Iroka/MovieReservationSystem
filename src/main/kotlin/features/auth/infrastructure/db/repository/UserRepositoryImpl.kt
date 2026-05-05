@@ -170,7 +170,7 @@ class UserRepositoryImpl : UserRepository {
     }
 
     private fun createUserVerificationToken(tokenParam: String, uid: UserEntity) {
-        val userVerificationId = CompositeID.Companion {
+        val userVerificationId = CompositeID {
             it[UserVerificationTable.token] = tokenParam
         }
         UserVerificationEntity.new(userVerificationId) {

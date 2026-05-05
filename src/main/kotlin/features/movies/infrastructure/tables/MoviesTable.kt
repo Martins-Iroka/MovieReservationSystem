@@ -1,5 +1,7 @@
 package com.martdev.features.movies.infrastructure.tables
 
+import com.martdev.features.movies.domain.model.Genre
+import com.martdev.features.movies.domain.model.Movie
 import org.jetbrains.exposed.v1.core.dao.id.EntityID
 import org.jetbrains.exposed.v1.core.dao.id.LongIdTable
 import org.jetbrains.exposed.v1.dao.LongEntity
@@ -25,4 +27,17 @@ class MoviesEntity(id: EntityID<Long>) : LongEntity(id) {
     var posterUrl by MoviesTable.posterUrl
     var duration by MoviesTable.duration
     var releasedDate by MoviesTable.releasedDate
+    val genres by GenreEntity via MovieGenreTable
 }
+
+fun MoviesEntity.toMovie() = Movie(
+    id = id.value,
+    title = title,
+    description = description,
+    posterUrl = posterUrl,
+    duration = duration,
+    releasedDate = releasedDate,
+    genres = genres.map {
+        Genre(it.id.value, it.name)
+    }
+)

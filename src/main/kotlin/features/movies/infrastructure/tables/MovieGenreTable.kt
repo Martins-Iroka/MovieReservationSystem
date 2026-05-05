@@ -8,8 +8,18 @@ import org.jetbrains.exposed.v1.dao.CompositeEntity
 import org.jetbrains.exposed.v1.dao.CompositeEntityClass
 
 object MovieGenreTable : CompositeIdTable("movie_genre") {
-    val movieId = reference("movie_id", MoviesTable, onDelete = ReferenceOption.CASCADE).entityId()
-    val genreId = reference("genre_id", GenresTable, onDelete = ReferenceOption.CASCADE).entityId()
+    val movieId = reference(
+        "movie_id",
+        MoviesTable,
+        onDelete = ReferenceOption.CASCADE,
+        onUpdate = ReferenceOption.CASCADE
+    ).entityId()
+    val genreId = reference(
+        "genre_id",
+        GenresTable,
+        onDelete = ReferenceOption.CASCADE,
+        onUpdate = ReferenceOption.CASCADE
+    ).entityId()
 
     override val primaryKey: PrimaryKey = PrimaryKey(
         movieId, genreId
@@ -19,6 +29,6 @@ object MovieGenreTable : CompositeIdTable("movie_genre") {
 class MovieGenreEntity(id: EntityID<CompositeID>) : CompositeEntity(id) {
     companion object : CompositeEntityClass<MovieGenreEntity>(MovieGenreTable)
 
-    var movieId by MoviesEntity referencedOn MovieGenreTable.movieId
-    var genreId by GenreEntity referencedOn MovieGenreTable.genreId
+    var movie by MoviesEntity referencedOn MovieGenreTable.movieId
+    var genre by GenreEntity referencedOn MovieGenreTable.genreId
 }
