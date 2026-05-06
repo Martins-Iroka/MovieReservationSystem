@@ -3,7 +3,7 @@ CREATE EXTENSION IF NOT EXISTS btree_gist;
 CREATE TYPE showtime_status AS ENUM ('SCHEDULED', 'CANCELLED');
 
 CREATE TABLE IF NOT EXISTS show_times(
-    id INT PRIMARY KEY,
+                                         id BIGSERIAL PRIMARY KEY,
     movie_id BIGINT NOT NULL,
     room_id INT NOT NULL,
     starts_at timestamptz NOT NULL,

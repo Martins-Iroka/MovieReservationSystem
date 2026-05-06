@@ -1,7 +1,7 @@
 CREATE TYPE seat_status AS ENUM ('AVAILABLE', 'HELD', 'BOOKED');
 
 CREATE TABLE IF NOT EXISTS showtime_seats(
-    id BIGINT PRIMARY KEY,
+                                             id BIGSERIAL PRIMARY KEY,
     showtime_id BIGINT NOT NULL,
     seat_id BIGINT NOT NULL,
     reservation_id BIGINT NULL,

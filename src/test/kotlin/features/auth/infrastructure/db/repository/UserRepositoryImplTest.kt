@@ -5,12 +5,11 @@ import com.martdev.features.auth.domain.repository.UserRepository
 import com.martdev.features.auth.infrastructure.db.tables.UserRefreshTokenTable
 import com.martdev.features.auth.infrastructure.db.tables.UserTable
 import com.martdev.features.auth.infrastructure.db.tables.UserVerificationTable
+import com.martdev.features.utils.PostgresContainer
 import com.martdev.shared.domain.model.DataResult
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import org.flywaydb.core.Flyway
-import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.deleteAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.junit.jupiter.api.*
@@ -27,10 +26,9 @@ import kotlin.time.Duration.Companion.hours
 @Testcontainers
 class UserRepositoryImplTest {
 
-    private lateinit var repository: UserRepository
-
 
     companion object {
+        private lateinit var repository: UserRepository
         const val VERIFICATION_TOKEN = "verification_token"
         const val REFRESH_TOKEN = "refresh_token"
         var user = UserData(
@@ -38,25 +36,8 @@ class UserRepositoryImplTest {
             password = "password",
         )
         @Container
-        val postgres: PostgreSQLContainer = PostgreSQLContainer(
-            "postgres:16-alpine"
-        ).apply {
-            withDatabaseName("mrs")
-            withUsername("test")
-            withPassword("test")
-        }
-        fun connectAndMigrate(){
-            Flyway.configure()
-                .dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
-                .load().migrate()
+        val postgres: PostgreSQLContainer = PostgresContainer.initPostgres()
 
-            Database.connect(
-                url = postgres.jdbcUrl,
-                driver = "org.postgresql.Driver",
-                user = postgres.username,
-                password = postgres.password
-            )
-        }
         @JvmStatic
         @AfterAll
         fun clearDb() {
@@ -69,14 +50,10 @@ class UserRepositoryImplTest {
 
         @JvmStatic
         @BeforeAll
-        fun setupContainer() {
-            connectAndMigrate()
+        fun connectToDBAndMigrate() {
+            PostgresContainer.connectToDBAndMigrate(postgres)
+            repository = UserRepositoryImpl()
         }
-    }
-
-    @BeforeEach
-    fun setup() {
-        repository = UserRepositoryImpl()
     }
 
     @Test
@@ -84,7 +61,7 @@ class UserRepositoryImplTest {
     fun `save user and verification token should return data result user`() = runTest {
         val savedUser = repository.saveUserAndVerificationToken(user, VERIFICATION_TOKEN)
 
-        assertTrue(savedUser is DataResult.Success)
+        assertTrue(savedUser is DataResult.Success, savedUser.toString())
         user = user.copy(id = savedUser.value.id)
     }
 

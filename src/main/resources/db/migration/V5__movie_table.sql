@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS movies(
-    id BIGINT PRIMARY KEY,
+                                     id BIGSERIAL PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
     poster_url TEXT NOT NULL,

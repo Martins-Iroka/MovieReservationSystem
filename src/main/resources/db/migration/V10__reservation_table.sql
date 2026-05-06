@@ -1,7 +1,7 @@
 CREATE TYPE status_type AS ENUM ('PENDING', 'CONFIRMED', 'CANCELLED');
 
 CREATE TABLE IF NOT EXISTS reservations(
-    id BIGINT PRIMARY KEY,
+                                           id BIGSERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL,
     showtime_id BIGINT NOT NULL,
     status status_type NOT NULL,
