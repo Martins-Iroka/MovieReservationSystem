@@ -7,9 +7,9 @@ import com.martdev.features.movies.infrastructure.tables.*
 import com.martdev.shared.domain.model.DataResult
 import com.martdev.shared.infrastruce.db.withSuspendTransaction
 import org.jetbrains.exposed.v1.core.SortOrder
-import org.jetbrains.exposed.v1.core.dao.id.CompositeID
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.select
 import org.koin.core.annotation.Single
 
@@ -90,7 +90,7 @@ class MovieRepositoryImpl : MovieRepository {
     }
 
     override suspend fun getMoviesByGenre(
-        genreId: Int,
+        genreId: Long,
         limit: Int,
         offset: Long
     ): DataResult<List<Movie>> {
@@ -110,13 +110,9 @@ class MovieRepositoryImpl : MovieRepository {
     private fun linkGenres(m: MoviesEntity, genres: List<Genre>): DataResult<Unit> {
         genres.forEach { g ->
             val genreEntity = GenreEntity.findById(g.id) ?: return DataResult.Failure.NotFound
-            val compositeId = CompositeID {
-                it[MovieGenreTable.movieId] = m.id
-                it[MovieGenreTable.genreId] = genreEntity.id
-            }
-            MovieGenreEntity.new(compositeId) {
-                movie = m
-                genre = genreEntity
+            MovieGenreTable.insert {
+                it[movieId] = m.id
+                it[genreId] = genreEntity.id
             }
         }
         return DataResult.Success(Unit)

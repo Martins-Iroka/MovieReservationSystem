@@ -12,13 +12,15 @@ import org.koin.core.annotation.Single
 
 @Single
 class GenreRepositoryImpl : GenreRepository {
-    override suspend fun saveGenre(genre: Genre): DataResult<Int> {
+    override suspend fun saveGenre(genre: Genre): DataResult<Genre> {
         return withSuspendTransaction {
-            val entityId = GenreEntity.new {
+            val entity = GenreEntity.new {
                 name = genre.name
-            }.id.value
+            }
 
-            DataResult.Success(entityId)
+            DataResult.Success(
+                Genre(id = entity.id.value, name = entity.name)
+            )
         }
     }
 
@@ -33,7 +35,7 @@ class GenreRepositoryImpl : GenreRepository {
         }
     }
 
-    override suspend fun deleteGenre(id: Int): DataResult<Int> {
+    override suspend fun deleteGenre(id: Long): DataResult<Int> {
         return withSuspendTransaction {
             val deletedGenreId = GenresTable.deleteWhere {
                 GenresTable.id eq id

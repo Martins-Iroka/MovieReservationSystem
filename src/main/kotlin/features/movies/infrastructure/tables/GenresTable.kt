@@ -1,16 +1,16 @@
 package com.martdev.features.movies.infrastructure.tables
 
 import org.jetbrains.exposed.v1.core.dao.id.EntityID
-import org.jetbrains.exposed.v1.core.dao.id.IntIdTable
-import org.jetbrains.exposed.v1.dao.IntEntity
-import org.jetbrains.exposed.v1.dao.IntEntityClass
+import org.jetbrains.exposed.v1.core.dao.id.LongIdTable
+import org.jetbrains.exposed.v1.dao.LongEntity
+import org.jetbrains.exposed.v1.dao.LongEntityClass
 
-object GenresTable : IntIdTable("genres") {
+object GenresTable : LongIdTable("genres") {
     val name = varchar("name", 50)
 }
 
-class GenreEntity(id: EntityID<Int>) : IntEntity(id) {
-    companion object : IntEntityClass<GenreEntity>(GenresTable)
+class GenreEntity(id: EntityID<Long>) : LongEntity(id) {
+    companion object : LongEntityClass<GenreEntity>(GenresTable)
 
     var name by GenresTable.name
     val movies by MoviesEntity via MovieGenreTable

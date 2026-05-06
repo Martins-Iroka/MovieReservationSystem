@@ -9,5 +9,5 @@ interface MovieRepository {
     suspend fun getMovieById(movieId: Long): DataResult<Movie>
     suspend fun updateMovie(movie: Movie): DataResult<Long>
     suspend fun deleteMovie(id: Long): DataResult<Int>
-    suspend fun getMoviesByGenre(genreId: Int, limit: Int, offset: Long): DataResult<List<Movie>>
+    suspend fun getMoviesByGenre(genreId: Long, limit: Int, offset: Long): DataResult<List<Movie>>
 }
