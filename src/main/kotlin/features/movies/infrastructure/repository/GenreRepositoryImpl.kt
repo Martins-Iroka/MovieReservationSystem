@@ -2,18 +2,45 @@ package com.martdev.features.movies.infrastructure.repository
 
 import com.martdev.features.movies.domain.model.Genre
 import com.martdev.features.movies.domain.repository.GenreRepository
+import com.martdev.features.movies.infrastructure.tables.GenreEntity
+import com.martdev.features.movies.infrastructure.tables.GenresTable
 import com.martdev.shared.domain.model.DataResult
+import com.martdev.shared.infrastruce.db.withSuspendTransaction
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.koin.core.annotation.Single
 
+@Single
 class GenreRepositoryImpl : GenreRepository {
-    override suspend fun saveGenre(genre: Genre): DataResult<Unit> {
-        TODO("Not yet implemented")
+    override suspend fun saveGenre(genre: Genre): DataResult<Int> {
+        return withSuspendTransaction {
+            val entityId = GenreEntity.new {
+                name = genre.name
+            }.id.value
+
+            DataResult.Success(entityId)
+        }
     }
 
     override suspend fun getGenres(): DataResult<List<Genre>> {
-        TODO("Not yet implemented")
+        return withSuspendTransaction {
+            val genres = GenreEntity.all()
+                .map {
+                    Genre(it.id.value, it.name)
+                }
+
+            DataResult.Success(genres)
+        }
     }
 
-    override suspend fun deleteGenre(id: Long): DataResult<Unit> {
-        TODO("Not yet implemented")
+    override suspend fun deleteGenre(id: Int): DataResult<Int> {
+        return withSuspendTransaction {
+            val deletedGenreId = GenresTable.deleteWhere {
+                GenresTable.id eq id
+            }
+            if (deletedGenreId == 0) {
+                DataResult.Failure.UnknownError("Failed to delete movie with id $id")
+            } else DataResult.Success(deletedGenreId)
+        }
     }
 }
