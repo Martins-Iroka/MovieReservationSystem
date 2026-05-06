@@ -22,9 +22,9 @@ class UserRepositoryImpl : UserRepository {
     override suspend fun activateUser(token: String): DataResult<Unit> {
         return withSuspendTransaction {
             val userId =
-                getUserIdByVerificationToken(token) ?: return@withSuspendTransaction DataResult.Failure.NotFound
+                getUserIdByVerificationToken(token) ?: return@withSuspendTransaction DataResult.Failure.NotFound()
 
-            updateIsVerifiedInUser(userId) ?: return@withSuspendTransaction DataResult.Failure.NotFound
+            updateIsVerifiedInUser(userId) ?: return@withSuspendTransaction DataResult.Failure.NotFound()
 
             val deletedRow = deleteUserVerificationToken(userId)
             if (deletedRow > 0) {
@@ -50,7 +50,7 @@ class UserRepositoryImpl : UserRepository {
         time: LocalDateTime
     ): DataResult<Unit> {
         return withSuspendTransaction {
-            val entity = UserEntity.findById(userId) ?: return@withSuspendTransaction DataResult.Failure.NotFound
+            val entity = UserEntity.findById(userId) ?: return@withSuspendTransaction DataResult.Failure.NotFound()
 
             val id = UserRefreshTokenEntity.new {
                 userEntity = entity
@@ -76,7 +76,7 @@ class UserRepositoryImpl : UserRepository {
         return withSuspendTransaction {
             val entity = UserEntity.find {
                 UserTable.email eq email
-            }.firstOrNull() ?: return@withSuspendTransaction DataResult.Failure.NotFound
+            }.firstOrNull() ?: return@withSuspendTransaction DataResult.Failure.NotFound()
 
             DataResult.Success(entity.toUserModel())
         }
@@ -84,7 +84,7 @@ class UserRepositoryImpl : UserRepository {
 
     override suspend fun getUserById(userId: Long): DataResult<UserData> {
         return withSuspendTransaction {
-            val entity = UserEntity.findById(userId) ?: return@withSuspendTransaction DataResult.Failure.NotFound
+            val entity = UserEntity.findById(userId) ?: return@withSuspendTransaction DataResult.Failure.NotFound()
 
             DataResult.Success(entity.toUserModel())
         }
@@ -101,7 +101,7 @@ class UserRepositoryImpl : UserRepository {
                 (UserRefreshTokenTable.tokenHash eq tokenHash) and
                         (UserRefreshTokenTable.expiresAt.greater(CurrentDateTime)) and
                         (UserRefreshTokenTable.revoked eq false)
-            }.firstOrNull() ?: return@withSuspendTransaction DataResult.Failure.NotFound
+            }.firstOrNull() ?: return@withSuspendTransaction DataResult.Failure.NotFound()
 
             val userId = row[UserTable.id].value
             val role = row[UserTable.role]
@@ -116,7 +116,7 @@ class UserRepositoryImpl : UserRepository {
                 UserRefreshTokenTable.tokenHash eq tokenHash
             ) {
                 it.revoked = true
-            } ?: return@withSuspendTransaction DataResult.Failure.NotFound
+            } ?: return@withSuspendTransaction DataResult.Failure.NotFound()
 
             DataResult.Success(Unit)
         }
@@ -125,7 +125,7 @@ class UserRepositoryImpl : UserRepository {
     override suspend fun deleteAndCreateVerificationToken(token: String, userId: Long): DataResult<Unit> {
         return withSuspendTransaction {
             deleteUserVerificationToken(userId)
-            val entity = UserEntity.findById(userId) ?: return@withSuspendTransaction DataResult.Failure.NotFound
+            val entity = UserEntity.findById(userId) ?: return@withSuspendTransaction DataResult.Failure.NotFound()
             createUserVerificationToken(token, entity)
             DataResult.Success(Unit)
         }
@@ -135,11 +135,11 @@ class UserRepositoryImpl : UserRepository {
         return withSuspendTransaction {
             val deletedRow = deleteUser(userId)
             if (deletedRow == 0) {
-                return@withSuspendTransaction DataResult.Failure.NotFound
+                return@withSuspendTransaction DataResult.Failure.NotFound()
             }
             val deletedVT = deleteUserVerificationToken(userId)
             if (deletedVT == 0) {
-                return@withSuspendTransaction DataResult.Failure.NotFound
+                return@withSuspendTransaction DataResult.Failure.NotFound()
             }
             DataResult.Success(Unit)
         }

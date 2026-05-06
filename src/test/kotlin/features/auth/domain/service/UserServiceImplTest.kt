@@ -11,9 +11,12 @@ import com.martdev.shared.domain.exception.InternalServerException
 import com.martdev.shared.domain.exception.NotFoundException
 import com.martdev.shared.domain.exception.UnauthorizedException
 import com.martdev.shared.domain.model.DataResult
-import io.mockk.*
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
+import io.mockk.slot
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -196,7 +199,7 @@ class UserServiceImplTest {
 
         coEvery {
             repository.activateUser(any())
-        } returns DataResult.Failure.NotFound
+        } returns DataResult.Failure.NotFound()
 
         val exception = assertFailsWith<NotFoundException> {
             service.verifyUser(user)
@@ -269,7 +272,7 @@ class UserServiceImplTest {
     fun `should throw bad request exception for get user by email`() = runTest {
         coEvery {
             repository.getUserByEmail(any())
-        } returns DataResult.Failure.NotFound
+        } returns DataResult.Failure.NotFound()
 
         val exception = assertFailsWith<BadRequestException> { service.loginUser(user) }
 
@@ -348,7 +351,7 @@ class UserServiceImplTest {
 
         coEvery {
             repository.saveRefreshToken(any(), any(), any())
-        } returns DataResult.Failure.NotFound
+        } returns DataResult.Failure.NotFound()
 
         assertFailsWith<NotFoundException> {
             service.loginUser(user)
@@ -418,7 +421,7 @@ class UserServiceImplTest {
 
         coEvery {
             repository.getUserIdAndRoleByRefreshToken(any())
-        } returns DataResult.Failure.NotFound
+        } returns DataResult.Failure.NotFound()
 
         assertFailsWith<UnauthorizedException> {
             service.refreshToken("")

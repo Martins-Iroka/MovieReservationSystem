@@ -27,7 +27,7 @@ class MoviesEntity(id: EntityID<Long>) : LongEntity(id) {
     var posterUrl by MoviesTable.posterUrl
     var duration by MoviesTable.duration
     var releasedDate by MoviesTable.releasedDate
-    val genres by GenreEntity via MovieGenreTable
+    var genres by GenreEntity via MovieGenreTable
 }
 
 fun MoviesEntity.toMovie() = Movie(

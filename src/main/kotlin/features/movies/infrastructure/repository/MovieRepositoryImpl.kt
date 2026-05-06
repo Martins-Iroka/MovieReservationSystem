@@ -8,6 +8,7 @@ import com.martdev.shared.domain.model.DataResult
 import com.martdev.shared.infrastruce.db.withSuspendTransaction
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.SizedCollection
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.select
@@ -26,7 +27,8 @@ class MovieRepositoryImpl : MovieRepository {
             }
             val result = linkGenres(movieEntity, movie.genres)
             if (result is DataResult.Failure.NotFound) {
-                return@withSuspendTransaction DataResult.Failure.NotFound
+                rollback()
+                return@withSuspendTransaction result
             }
             DataResult.Success(movieEntity.id.value)
         }
@@ -58,7 +60,7 @@ class MovieRepositoryImpl : MovieRepository {
     override suspend fun getMovieById(movieId: Long): DataResult<Movie> {
         return withSuspendTransaction {
             val entity = MoviesEntity
-                .findById(id = movieId) ?: return@withSuspendTransaction DataResult.Failure.NotFound
+                .findById(id = movieId) ?: return@withSuspendTransaction DataResult.Failure.NotFound()
             val movie = entity.toMovie()
             DataResult.Success(movie)
         }
@@ -66,13 +68,24 @@ class MovieRepositoryImpl : MovieRepository {
 
     override suspend fun updateMovie(movie: Movie): DataResult<Long> {
         return withSuspendTransaction {
+            val genres = movie.genres.map { g ->
+                GenreEntity.findById(g.id) ?: run {
+                    rollback()
+                    return@withSuspendTransaction DataResult.Failure.NotFound("${g.name} genre doesn't exist")
+                }
+            }
+
             val movieId = MoviesEntity.findByIdAndUpdate(movie.id) {
                 it.title = movie.title
                 it.description = movie.description
                 it.posterUrl = movie.posterUrl
                 it.duration = movie.duration
                 it.releasedDate = movie.releasedDate
-            }?.id?.value ?: return@withSuspendTransaction DataResult.Failure.NotFound
+                it.genres = SizedCollection(
+                    genres
+                )
+            }?.id?.value
+                ?: return@withSuspendTransaction DataResult.Failure.NotFound("Movie with id ${movie.id} doesn't exist")
 
             DataResult.Success(movieId)
         }
@@ -95,7 +108,10 @@ class MovieRepositoryImpl : MovieRepository {
         offset: Long
     ): DataResult<List<Movie>> {
         return withSuspendTransaction {
-            val genreEntity = GenreEntity.findById(genreId) ?: return@withSuspendTransaction DataResult.Failure.NotFound
+            val genreEntity =
+                GenreEntity.findById(genreId) ?: return@withSuspendTransaction DataResult.Failure.NotFound(
+                    "Genre with id $genreId doesn't exist"
+                )
 
             val movies = genreEntity.movies
                 .limit(limit).offset(offset)
@@ -109,7 +125,8 @@ class MovieRepositoryImpl : MovieRepository {
 
     private fun linkGenres(m: MoviesEntity, genres: List<Genre>): DataResult<Unit> {
         genres.forEach { g ->
-            val genreEntity = GenreEntity.findById(g.id) ?: return DataResult.Failure.NotFound
+            val genreEntity =
+                GenreEntity.findById(g.id) ?: return DataResult.Failure.NotFound("${g.name} genre doesn't exist")
             MovieGenreTable.insert {
                 it[movieId] = m.id
                 it[genreId] = genreEntity.id
