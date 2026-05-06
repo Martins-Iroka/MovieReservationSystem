@@ -41,7 +41,7 @@ class GenreRepositoryImpl : GenreRepository {
                 GenresTable.id eq id
             }
             if (deletedGenreId == 0) {
-                DataResult.Failure.UnknownError("Failed to delete movie with id $id")
+                DataResult.Failure.UnknownError("Failed to delete genre with id $id")
             } else DataResult.Success(deletedGenreId)
         }
     }

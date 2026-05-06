@@ -242,8 +242,6 @@ class MovieRepositoryImplTest {
         assertEquals("Failed to delete movie with id $nonExistentId", result.errorMessage)
     }
 
-    // --- Helper Functions ---
-
     private suspend fun createAndSaveGenres(vararg names: String): List<Genre> {
         return names.map { name ->
             (genreRepo.saveGenre(Genre(name = name)) as DataResult.Success).value
