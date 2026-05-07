@@ -57,7 +57,7 @@ class MovieRepositoryImplTest {
         val movie = createMovie(title = "Inception", genres = genres)
 
         // Act
-        val result = movieRepo.saveMovieData(movie)
+        val result = movieRepo.createMovie(movie)
 
         // Assert
         assertTrue(result is DataResult.Success, "Movie should be saved successfully")
@@ -76,7 +76,7 @@ class MovieRepositoryImplTest {
         val movie = createMovie(title = "Apex", genres = genres)
 
         // Act
-        val result = movieRepo.saveMovieData(movie)
+        val result = movieRepo.createMovie(movie)
 
         // Assert
         assertTrue(result is DataResult.Failure.NotFound, "Movie should be not be saved")
@@ -161,7 +161,7 @@ class MovieRepositoryImplTest {
 
         // Assert
         assertTrue(updateResult is DataResult.Success)
-        assertEquals(originalMovieId, updateResult.value)
+        assertEquals(originalMovieId, updateResult.value.id)
 
         val fetchedResult = movieRepo.getMovieById(originalMovieId)
         assertTrue(fetchedResult is DataResult.Success)
@@ -250,7 +250,7 @@ class MovieRepositoryImplTest {
 
     private suspend fun createAndSaveMovie(title: String, genres: List<Genre>): Long {
         val movie = createMovie(title = title, genres = genres)
-        return (movieRepo.saveMovieData(movie) as DataResult.Success).value
+        return (movieRepo.createMovie(movie) as DataResult.Success).value
     }
 
     private fun createMovie(title: String, genres: List<Genre>) = Movie(

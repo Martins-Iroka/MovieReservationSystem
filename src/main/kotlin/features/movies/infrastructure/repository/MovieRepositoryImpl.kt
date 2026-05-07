@@ -16,7 +16,7 @@ import org.koin.core.annotation.Single
 
 @Single
 class MovieRepositoryImpl : MovieRepository {
-    override suspend fun saveMovieData(movie: Movie): DataResult<Long> {
+    override suspend fun createMovie(movie: Movie): DataResult<Long> {
         return withSuspendTransaction {
             val movieEntity = MoviesEntity.new {
                 title = movie.title
@@ -60,13 +60,14 @@ class MovieRepositoryImpl : MovieRepository {
     override suspend fun getMovieById(movieId: Long): DataResult<Movie> {
         return withSuspendTransaction {
             val entity = MoviesEntity
-                .findById(id = movieId) ?: return@withSuspendTransaction DataResult.Failure.NotFound()
+                .findById(id = movieId)
+                ?: return@withSuspendTransaction DataResult.Failure.NotFound("Movie with id $movieId not found")
             val movie = entity.toMovie()
             DataResult.Success(movie)
         }
     }
 
-    override suspend fun updateMovie(movie: Movie): DataResult<Long> {
+    override suspend fun updateMovie(movie: Movie): DataResult<Movie> {
         return withSuspendTransaction {
             val genres = movie.genres.map { g ->
                 GenreEntity.findById(g.id) ?: run {
@@ -75,7 +76,7 @@ class MovieRepositoryImpl : MovieRepository {
                 }
             }
 
-            val movieId = MoviesEntity.findByIdAndUpdate(movie.id) {
+            val movieEntity = MoviesEntity.findByIdAndUpdate(movie.id) {
                 it.title = movie.title
                 it.description = movie.description
                 it.posterUrl = movie.posterUrl
@@ -84,10 +85,10 @@ class MovieRepositoryImpl : MovieRepository {
                 it.genres = SizedCollection(
                     genres
                 )
-            }?.id?.value
+            }
                 ?: return@withSuspendTransaction DataResult.Failure.NotFound("Movie with id ${movie.id} doesn't exist")
 
-            DataResult.Success(movieId)
+            DataResult.Success(movieEntity.toMovie())
         }
     }
 

@@ -1,7 +1,7 @@
 package com.martdev.config
 
-import com.martdev.util.getEnvValue
-import io.ktor.server.application.ApplicationEnvironment
+import com.martdev.shared.util.getEnvValue
+import io.ktor.server.application.*
 
 data class DatabaseConfig(
     val address: String = "",
