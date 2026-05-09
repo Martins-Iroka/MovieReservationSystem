@@ -1,6 +1,7 @@
 package com.martdev.plugins
 
 import com.martdev.features.auth.api.request.*
+import com.martdev.features.movies.api.MovieDTO
 import io.ktor.server.application.*
 import io.ktor.server.plugins.requestvalidation.*
 
@@ -42,6 +43,17 @@ fun Application.configureRequestValidation() {
             if (request.refreshToken.isEmpty()) {
                 ValidationResult.Invalid("Invalid refresh token")
             } else ValidationResult.Valid
+        }
+
+        validate<MovieDTO> { request ->
+            when {
+                request.title.isEmpty() -> invalidResponseResult("Title is required")
+                request.description.isEmpty() -> invalidResponseResult("Description is required")
+                request.posterUrl.isEmpty() -> invalidResponseResult("Poster URL is required")
+                request.duration <= 0 -> invalidResponseResult("Duration is required")
+                request.genres.isEmpty() -> invalidResponseResult("Movie genre is requred")
+                else -> ValidationResult.Valid
+            }
         }
     }
 }

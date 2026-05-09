@@ -1,6 +1,7 @@
 package com.martdev.plugins
 
 import com.martdev.features.auth.api.authRoutes
+import com.martdev.features.movies.api.movieRoute
 import io.ktor.server.application.*
 import io.ktor.server.routing.*
 
@@ -9,6 +10,7 @@ fun Application.configureRouting() {
     routing {
         route(apiV1Path) {
             authRoutes()
+            movieRoute()
         }
     }
 }

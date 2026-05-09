@@ -1,11 +1,14 @@
 package com.martdev.features.movies.api
 
+import com.martdev.features.auth.domain.model.Role
 import com.martdev.features.movies.domain.service.movie.MovieService
 import com.martdev.shared.api.AUTH_JWT
 import com.martdev.shared.api.DataResponse
+import com.martdev.shared.api.withRole
 import com.martdev.shared.domain.exception.BadRequestException
 import io.ktor.http.*
 import io.ktor.server.auth.*
+import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.koin.ktor.ext.inject
@@ -14,9 +17,9 @@ const val moviePath = "/movie"
 const val adminPath = "/admin/$moviePath"
 const val createMoviePath = "/create-movie"
 const val movieListPath = "/get-movies"
-const val movieByIdPath = "/get-movie-by-id/{movie-id}"
+const val movieByIdPath = "/get-movie-by-id/{movie_id}"
 const val updateMoviePath = "/update-movie"
-const val deleteMoviePath = "/delete-movie"
+const val deleteMoviePath = "/delete-movie/{movie_id}"
 const val moviesByGenrePath = "/get-movies-by-genre/{genre-id}"
 
 fun Route.movieRoute() {
@@ -33,7 +36,8 @@ fun Route.movieRoute() {
 
         get(movieByIdPath) {
             val movieId = getParameterFromPath("movie_id")
-            val response = service.getMovieById(movieId).toMovieDto()
+            val movie = service.getMovieById(movieId)
+            val response = movie.toMovieDto()
             val dataResponse = DataResponse(response)
             call.respond(HttpStatusCode.OK, dataResponse)
         }
@@ -47,8 +51,27 @@ fun Route.movieRoute() {
             val dataResponse = DataResponse(response)
             call.respond(HttpStatusCode.OK, dataResponse)
         }
-        route(adminPath) {
+        withRole(Role.ADMIN) {
+            route(adminPath) {
+                post(createMoviePath) {
+                    val movie = call.receive<MovieDTO>().toMovie()
+                    service.createMovie(movie)
+                    call.respond(HttpStatusCode.Created)
+                }
 
+                put(updateMoviePath) {
+                    val movie = call.receive<MovieDTO>().toMovie()
+                    val updatedMovie = service.updateMovie(movie)
+                    val dataResponse = DataResponse(updatedMovie)
+                    call.respond(HttpStatusCode.OK, dataResponse)
+                }
+
+                delete(deleteMoviePath) {
+                    val movieId = getParameterFromPath("movie_id")
+                    service.deleteMovie(movieId)
+                    call.respond(HttpStatusCode.OK)
+                }
+            }
         }
     }
 }

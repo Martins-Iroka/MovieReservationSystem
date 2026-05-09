@@ -9,6 +9,6 @@ data class MovieDTO(
     val description: String = "",
     val posterUrl: String = "",
     val duration: Int = 0,
-    val releasedDate: String,
+    val releasedDate: String = "",
     val genres: List<GenreDTO> = emptyList()
 )
