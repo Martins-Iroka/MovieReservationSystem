@@ -25,3 +25,7 @@ fun MovieDTO.toMovie() = Movie(
 fun Genre.toGenreDto() = GenreDTO(
     id, name
 )
+
+fun GenreDTO.toGenre() = Genre(
+    name = name
+)

@@ -4,6 +4,7 @@ import com.martdev.features.auth.domain.model.Role
 import com.martdev.features.movies.domain.service.movie.MovieService
 import com.martdev.shared.api.AUTH_JWT
 import com.martdev.shared.api.DataResponse
+import com.martdev.shared.api.getParameterFromPath
 import com.martdev.shared.api.withRole
 import com.martdev.shared.domain.exception.BadRequestException
 import io.ktor.http.*
@@ -74,10 +75,6 @@ fun Route.movieRoute() {
             }
         }
     }
-}
-
-private fun RoutingContext.getParameterFromPath(parameter: String): Long {
-    return call.parameters[parameter]?.toLongOrNull() ?: throw BadRequestException("Invalid id")
 }
 
 private fun RoutingContext.getLimitAndOffset(): Pair<Int, Long> {

@@ -9,8 +9,8 @@ import org.koin.core.annotation.Single
 class GenreServiceImpl(
     private val repository: GenreRepository
 ) : GenreService {
-    override suspend fun createGenre(genre: Genre): Genre {
-        return repository.saveGenre(genre).returnValue()
+    override suspend fun createGenre(genre: Genre) {
+        repository.saveGenre(genre).returnValue()
     }
 
     override suspend fun getGenres(): List<Genre> {
