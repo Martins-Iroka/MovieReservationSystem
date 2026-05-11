@@ -25,33 +25,8 @@ const val moviesByGenrePath = "/get-movies-by-genre/{genre-id}"
 
 fun Route.movieRoute() {
     val service by inject<MovieService>()
+    moviePublicRoute(service)
     authenticate(AUTH_JWT) {
-        get(movieListPath) {
-            val (limit, offset) = getLimitAndOffset()
-            val response = service.getMovies(limit, offset).map {
-                it.toMovieItemDto()
-            }
-            val dataResponse = DataResponse(response)
-            call.respond(HttpStatusCode.OK, dataResponse)
-        }
-
-        get(movieByIdPath) {
-            val movieId = getParameterFromPath("movie_id")
-            val movie = service.getMovieById(movieId)
-            val response = movie.toMovieDto()
-            val dataResponse = DataResponse(response)
-            call.respond(HttpStatusCode.OK, dataResponse)
-        }
-
-        get(moviesByGenrePath) {
-            val genreId = getParameterFromPath("genre-id")
-            val (limit, offset) = getLimitAndOffset()
-            val response = service.getMoviesByGenre(genreId, limit, offset).map {
-                it.toMovieItemDto()
-            }
-            val dataResponse = DataResponse(response)
-            call.respond(HttpStatusCode.OK, dataResponse)
-        }
         withRole(Role.ADMIN) {
             route(adminPath) {
                 post(createMoviePath) {
@@ -62,7 +37,7 @@ fun Route.movieRoute() {
 
                 put(updateMoviePath) {
                     val movie = call.receive<MovieDTO>().toMovie()
-                    val updatedMovie = service.updateMovie(movie)
+                    val updatedMovie = service.updateMovie(movie).toMovieDto()
                     val dataResponse = DataResponse(updatedMovie)
                     call.respond(HttpStatusCode.OK, dataResponse)
                 }
@@ -74,6 +49,35 @@ fun Route.movieRoute() {
                 }
             }
         }
+    }
+}
+
+private fun Route.moviePublicRoute(service: MovieService) {
+    get(movieListPath) {
+        val (limit, offset) = getLimitAndOffset()
+        val response = service.getMovies(limit, offset).map {
+            it.toMovieItemDto()
+        }
+        val dataResponse = DataResponse(response)
+        call.respond(HttpStatusCode.OK, dataResponse)
+    }
+
+    get(movieByIdPath) {
+        val movieId = getParameterFromPath("movie_id")
+        val movie = service.getMovieById(movieId)
+        val response = movie.toMovieDto()
+        val dataResponse = DataResponse(response)
+        call.respond(HttpStatusCode.OK, dataResponse)
+    }
+
+    get(moviesByGenrePath) {
+        val genreId = getParameterFromPath("genre-id")
+        val (limit, offset) = getLimitAndOffset()
+        val response = service.getMoviesByGenre(genreId, limit, offset).map {
+            it.toMovieItemDto()
+        }
+        val dataResponse = DataResponse(response)
+        call.respond(HttpStatusCode.OK, dataResponse)
     }
 }
 

@@ -1,14 +1,9 @@
 package com.martdev.plugins
 
 import com.martdev.shared.api.ErrorResponse
-import com.martdev.shared.domain.exception.ForbiddenException
-import com.martdev.shared.domain.exception.InternalServerException
-import com.martdev.shared.domain.exception.UnauthorizedException
-import com.martdev.shared.domain.exception.BadRequestException
-import com.martdev.shared.domain.exception.NotFoundException
+import com.martdev.shared.domain.exception.*
 import io.ktor.http.*
 import io.ktor.server.application.*
-import io.ktor.server.plugins.*
 import io.ktor.server.plugins.requestvalidation.*
 import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.response.*

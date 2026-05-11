@@ -53,6 +53,7 @@ dependencies {
     ksp(libs.koin.annotation.compiler)
 
     testImplementation(kotlin("test"))
+    testImplementation(ktorLibs.client.contentNegotiation)
     testImplementation(ktorLibs.server.testHost)
     testImplementation(libs.junit)
     testImplementation(libs.junit5)

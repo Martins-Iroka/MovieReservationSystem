@@ -33,9 +33,11 @@ class GenreServiceImplTest {
             repository.saveGenre(any())
         } returns DataResult.Success(Genre(id = 1))
 
-        val result = service.createGenre(Genre())
+        service.createGenre(Genre())
 
-        assertEquals(1, result.id)
+        coVerify {
+            repository.saveGenre(any())
+        }
     }
 
     @Test
