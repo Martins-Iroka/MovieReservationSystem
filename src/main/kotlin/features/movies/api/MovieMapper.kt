@@ -1,5 +1,8 @@
 package com.martdev.features.movies.api
 
+import com.martdev.features.movies.api.genre.GenreDTO
+import com.martdev.features.movies.api.movie.MovieDTO
+import com.martdev.features.movies.api.movie.MovieListItemDTO
 import com.martdev.features.movies.domain.model.Genre
 import com.martdev.features.movies.domain.model.Movie
 import kotlinx.datetime.LocalDate

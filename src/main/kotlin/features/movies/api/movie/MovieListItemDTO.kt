@@ -1,4 +1,4 @@
-package com.martdev.features.movies.api
+package com.martdev.features.movies.api.movie
 
 import kotlinx.serialization.Serializable
 

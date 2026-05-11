@@ -1,6 +1,9 @@
-package com.martdev.features.movies.api
+package com.martdev.features.movies.api.movie
 
 import com.martdev.features.auth.domain.model.Role
+import com.martdev.features.movies.api.toMovie
+import com.martdev.features.movies.api.toMovieDto
+import com.martdev.features.movies.api.toMovieItemDto
 import com.martdev.features.movies.domain.service.movie.MovieService
 import com.martdev.shared.api.AUTH_JWT
 import com.martdev.shared.api.DataResponse
@@ -25,7 +28,11 @@ const val moviesByGenrePath = "/get-movies-by-genre/{genre-id}"
 
 fun Route.movieRoute() {
     val service by inject<MovieService>()
+    adminMovieRoute(service)
     moviePublicRoute(service)
+}
+
+private fun Route.adminMovieRoute(service: MovieService) {
     authenticate(AUTH_JWT) {
         withRole(Role.ADMIN) {
             route(adminPath) {

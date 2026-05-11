@@ -49,6 +49,7 @@ dependencies {
     implementation(libs.postgresql)
     implementation(libs.stytch)
     implementation(libs.testcontainers.postgresql)
+    testImplementation("io.ktor:ktor-server-test-host-jvm:3.4.0")
 
     ksp(libs.koin.annotation.compiler)
 

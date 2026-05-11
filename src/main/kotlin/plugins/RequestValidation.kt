@@ -1,8 +1,8 @@
 package com.martdev.plugins
 
 import com.martdev.features.auth.api.request.*
-import com.martdev.features.movies.api.GenreDTO
-import com.martdev.features.movies.api.MovieDTO
+import com.martdev.features.movies.api.genre.GenreDTO
+import com.martdev.features.movies.api.movie.MovieDTO
 import io.ktor.server.application.*
 import io.ktor.server.plugins.requestvalidation.*
 

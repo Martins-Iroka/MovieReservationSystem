@@ -2,9 +2,9 @@ package features.movies.api
 
 import com.martdev.config.JWTConfig
 import com.martdev.features.auth.infrastructure.security.JWTAuthImpl
-import com.martdev.features.movies.api.GenreDTO
-import com.martdev.features.movies.api.MovieDTO
-import com.martdev.features.movies.api.movieRoute
+import com.martdev.features.movies.api.genre.GenreDTO
+import com.martdev.features.movies.api.movie.MovieDTO
+import com.martdev.features.movies.api.movie.movieRoute
 import com.martdev.features.movies.domain.model.Movie
 import com.martdev.features.movies.domain.service.movie.MovieService
 import features.utils.clientConfiguration

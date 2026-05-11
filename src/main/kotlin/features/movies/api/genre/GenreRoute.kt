@@ -1,6 +1,8 @@
-package com.martdev.features.movies.api
+package com.martdev.features.movies.api.genre
 
 import com.martdev.features.auth.domain.model.Role
+import com.martdev.features.movies.api.toGenre
+import com.martdev.features.movies.api.toGenreDto
 import com.martdev.features.movies.domain.service.genre.GenreService
 import com.martdev.shared.api.AUTH_JWT
 import com.martdev.shared.api.DataResponse
@@ -21,17 +23,15 @@ const val deleteGenrePath = "/delete-genre/{genre_id}"
 
 fun Route.genreRoute() {
     val service by inject<GenreService>()
-    authenticate(AUTH_JWT) {
-        get(getGenresPath) {
-            val genres = service.getGenres().map {
-                it.toGenreDto()
-            }
-            val dataResponse = DataResponse(genres)
-            call.respond(HttpStatusCode.OK, dataResponse)
-        }
+    adminGenreRoute(service)
+    genrePublicRoute(service)
+}
 
-        route(adminGenrePath) {
-            withRole(Role.ADMIN) {
+private fun Route.adminGenreRoute(service: GenreService) {
+    authenticate(AUTH_JWT) {
+        withRole(Role.ADMIN) {
+            route(adminGenrePath) {
+
                 post(createGenrePath) {
                     val genre = call.receive<GenreDTO>().toGenre()
                     service.createGenre(genre)
@@ -45,5 +45,15 @@ fun Route.genreRoute() {
                 }
             }
         }
+    }
+}
+
+private fun Route.genrePublicRoute(service: GenreService) {
+    get(getGenresPath) {
+        val genres = service.getGenres().map {
+            it.toGenreDto()
+        }
+        val dataResponse = DataResponse(genres)
+        call.respond(HttpStatusCode.OK, dataResponse)
     }
 }
