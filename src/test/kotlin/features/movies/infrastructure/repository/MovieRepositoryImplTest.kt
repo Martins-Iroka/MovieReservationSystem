@@ -1,9 +1,11 @@
-package com.martdev.features.movies.infrastructure.repository
+package features.movies.infrastructure.repository
 
 import com.martdev.features.movies.domain.model.Genre
 import com.martdev.features.movies.domain.model.Movie
 import com.martdev.features.movies.domain.repository.GenreRepository
 import com.martdev.features.movies.domain.repository.MovieRepository
+import com.martdev.features.movies.infrastructure.repository.GenreRepositoryImpl
+import com.martdev.features.movies.infrastructure.repository.MovieRepositoryImpl
 import com.martdev.features.movies.infrastructure.tables.GenresTable
 import com.martdev.features.movies.infrastructure.tables.MovieGenreTable
 import com.martdev.features.movies.infrastructure.tables.MoviesTable
