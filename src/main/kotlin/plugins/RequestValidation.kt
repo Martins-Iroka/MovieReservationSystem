@@ -3,6 +3,8 @@ package com.martdev.plugins
 import com.martdev.features.auth.api.request.*
 import com.martdev.features.movies.api.genre.GenreDTO
 import com.martdev.features.movies.api.movie.MovieDTO
+import com.martdev.features.room.api.room.RoomDTO
+import com.martdev.features.room.api.seat.SeatDTO
 import io.ktor.server.application.*
 import io.ktor.server.plugins.requestvalidation.*
 
@@ -61,6 +63,24 @@ fun Application.configureRequestValidation() {
             if (request.name.isEmpty()) {
                 invalidResponseResult("Genre name required")
             } else ValidationResult.Valid
+        }
+
+        validate<RoomDTO> { request ->
+            when {
+                request.name.isEmpty() -> invalidResponseResult("Room name is required")
+                request.rows <= 0 -> invalidResponseResult("A number of rows are required")
+                request.columns <= 0 -> invalidResponseResult("A number of columns are required")
+                else -> ValidationResult.Valid
+            }
+        }
+
+        validate<SeatDTO> { request ->
+            when {
+                request.roomId <= 0 -> invalidResponseResult("Room id is required")
+                request.rowLabel.isEmpty() -> invalidResponseResult("Row label is required")
+                request.seatNumber <= 0 -> invalidResponseResult("Seat number is required")
+                else -> ValidationResult.Valid
+            }
         }
     }
 }

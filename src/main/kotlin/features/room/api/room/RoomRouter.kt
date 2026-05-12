@@ -42,7 +42,7 @@ private fun Route.adminRoomRoute(service: RoomService) {
                 put(updateRoomPath) {
                     val roomId = getParameterFromPath("room_id")
                     val room = call.receive<RoomDTO>().toRoom().copy(id = roomId)
-                    val updatedRoom = service.updateRoom(room)
+                    val updatedRoom = service.updateRoom(room).toRoomDTO()
                     val dataResponse = DataResponse(updatedRoom)
                     call.respond(HttpStatusCode.OK, dataResponse)
                 }
