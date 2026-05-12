@@ -18,11 +18,11 @@ import io.ktor.server.routing.*
 import org.koin.ktor.ext.inject
 
 const val moviePath = "/movie"
-const val adminPath = "/admin/$moviePath"
+const val adminMoviePath = "/admin/$moviePath"
 const val createMoviePath = "/create-movie"
 const val movieListPath = "/get-movies"
 const val movieByIdPath = "/get-movie-by-id/{movie_id}"
-const val updateMoviePath = "/update-movie"
+const val updateMoviePath = "/update-movie/{movie_id}"
 const val deleteMoviePath = "/delete-movie/{movie_id}"
 const val moviesByGenrePath = "/get-movies-by-genre/{genre-id}"
 
@@ -35,7 +35,7 @@ fun Route.movieRoute() {
 private fun Route.adminMovieRoute(service: MovieService) {
     authenticate(AUTH_JWT) {
         withRole(Role.ADMIN) {
-            route(adminPath) {
+            route(adminMoviePath) {
                 post(createMoviePath) {
                     val movie = call.receive<MovieDTO>().toMovie()
                     service.createMovie(movie)
@@ -43,7 +43,8 @@ private fun Route.adminMovieRoute(service: MovieService) {
                 }
 
                 put(updateMoviePath) {
-                    val movie = call.receive<MovieDTO>().toMovie()
+                    val movieId = getParameterFromPath("movie_id")
+                    val movie = call.receive<MovieDTO>().toMovie().copy(id = movieId)
                     val updatedMovie = service.updateMovie(movie).toMovieDto()
                     val dataResponse = DataResponse(updatedMovie)
                     call.respond(HttpStatusCode.OK, dataResponse)
@@ -52,7 +53,7 @@ private fun Route.adminMovieRoute(service: MovieService) {
                 delete(deleteMoviePath) {
                     val movieId = getParameterFromPath("movie_id")
                     service.deleteMovie(movieId)
-                    call.respond(HttpStatusCode.OK)
+                    call.respond(HttpStatusCode.NoContent)
                 }
             }
         }
@@ -60,31 +61,33 @@ private fun Route.adminMovieRoute(service: MovieService) {
 }
 
 private fun Route.moviePublicRoute(service: MovieService) {
-    get(movieListPath) {
-        val (limit, offset) = getLimitAndOffset()
-        val response = service.getMovies(limit, offset).map {
-            it.toMovieItemDto()
+    route(moviePath) {
+        get(movieListPath) {
+            val (limit, offset) = getLimitAndOffset()
+            val response = service.getMovies(limit, offset).map {
+                it.toMovieItemDto()
+            }
+            val dataResponse = DataResponse(response)
+            call.respond(HttpStatusCode.OK, dataResponse)
         }
-        val dataResponse = DataResponse(response)
-        call.respond(HttpStatusCode.OK, dataResponse)
-    }
 
-    get(movieByIdPath) {
-        val movieId = getParameterFromPath("movie_id")
-        val movie = service.getMovieById(movieId)
-        val response = movie.toMovieDto()
-        val dataResponse = DataResponse(response)
-        call.respond(HttpStatusCode.OK, dataResponse)
-    }
-
-    get(moviesByGenrePath) {
-        val genreId = getParameterFromPath("genre-id")
-        val (limit, offset) = getLimitAndOffset()
-        val response = service.getMoviesByGenre(genreId, limit, offset).map {
-            it.toMovieItemDto()
+        get(movieByIdPath) {
+            val movieId = getParameterFromPath("movie_id")
+            val movie = service.getMovieById(movieId)
+            val response = movie.toMovieDto()
+            val dataResponse = DataResponse(response)
+            call.respond(HttpStatusCode.OK, dataResponse)
         }
-        val dataResponse = DataResponse(response)
-        call.respond(HttpStatusCode.OK, dataResponse)
+
+        get(moviesByGenrePath) {
+            val genreId = getParameterFromPath("genre-id")
+            val (limit, offset) = getLimitAndOffset()
+            val response = service.getMoviesByGenre(genreId, limit, offset).map {
+                it.toMovieItemDto()
+            }
+            val dataResponse = DataResponse(response)
+            call.respond(HttpStatusCode.OK, dataResponse)
+        }
     }
 }
 

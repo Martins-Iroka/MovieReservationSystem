@@ -126,7 +126,7 @@ class MovieRouteTest {
             configure()
         }
         val client = clientConfiguration(userToken)
-        client.get("/get-movie-by-id/5").apply {
+        client.get("movie/get-movie-by-id/5").apply {
             assertEquals(HttpStatusCode.OK, status)
         }
     }
@@ -141,7 +141,7 @@ class MovieRouteTest {
             configure()
         }
         val client = clientConfiguration(userToken)
-        client.get("/get-movies").apply {
+        client.get("movie/get-movies").apply {
             assertEquals(HttpStatusCode.OK, status)
         }
     }
@@ -156,7 +156,7 @@ class MovieRouteTest {
             configure()
         }
         val client = clientConfiguration(userToken)
-        client.get("/get-movies-by-genre/15").apply {
+        client.get("movie/get-movies-by-genre/15").apply {
             assertEquals(HttpStatusCode.OK, status)
         }
     }

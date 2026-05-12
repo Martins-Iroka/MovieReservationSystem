@@ -41,7 +41,7 @@ private fun Route.adminGenreRoute(service: GenreService) {
                 delete(deleteGenrePath) {
                     val genreId = getParameterFromPath("genre_id")
                     service.deleteGenre(genreId)
-                    call.respond(HttpStatusCode.OK)
+                    call.respond(HttpStatusCode.NoContent)
                 }
             }
         }
@@ -49,11 +49,13 @@ private fun Route.adminGenreRoute(service: GenreService) {
 }
 
 private fun Route.genrePublicRoute(service: GenreService) {
-    get(getGenresPath) {
-        val genres = service.getGenres().map {
-            it.toGenreDto()
+    route(genrePath) {
+        get(getGenresPath) {
+            val genres = service.getGenres().map {
+                it.toGenreDto()
+            }
+            val dataResponse = DataResponse(genres)
+            call.respond(HttpStatusCode.OK, dataResponse)
         }
-        val dataResponse = DataResponse(genres)
-        call.respond(HttpStatusCode.OK, dataResponse)
     }
 }

@@ -9,8 +9,8 @@ import org.koin.core.annotation.Single
 class SeatServiceImpl(
     private val repository: SeatRepository
 ) : SeatService {
-    override suspend fun createSeats(seats: List<Seat>) {
-        repository.createSeats(seats).returnValue()
+    override suspend fun createSeats(seats: List<Seat>): List<Seat> {
+        return repository.createSeats(seats).returnValue()
     }
 
     override suspend fun getSeatsByRoomId(roomId: Long): List<Seat> {

@@ -9,8 +9,8 @@ import org.koin.core.annotation.Single
 class RoomServiceImpl(
     private val repository: RoomRepository
 ) : RoomService {
-    override suspend fun createRoom(room: Room) {
-        repository.createRoom(room).returnValue()
+    override suspend fun createRoom(room: Room): Room {
+        return repository.createRoom(room).returnValue()
     }
 
     override suspend fun getAllRooms(): List<Room> {

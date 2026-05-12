@@ -77,7 +77,7 @@ class GenreRouteTest {
             configure()
         }
         val client = clientConfiguration(userToken)
-        client.get("/genres").apply {
+        client.get("/genre/genres").apply {
             assertEquals(HttpStatusCode.OK, status)
         }
     }
