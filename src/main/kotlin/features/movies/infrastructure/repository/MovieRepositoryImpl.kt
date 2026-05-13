@@ -98,7 +98,7 @@ class MovieRepositoryImpl : MovieRepository {
                 MoviesTable.id eq id
             }
             if (deletedRow == 0) {
-                DataResult.Failure.UnknownError("Failed to delete movie with id $id")
+                DataResult.Failure.UnknownError("Failed to delete movie")
             } else DataResult.Success(deletedRow)
         }
     }
