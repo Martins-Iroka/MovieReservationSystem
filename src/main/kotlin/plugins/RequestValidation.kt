@@ -5,8 +5,12 @@ import com.martdev.features.movies.api.genre.GenreDTO
 import com.martdev.features.movies.api.movie.MovieDTO
 import com.martdev.features.room.api.room.RoomDTO
 import com.martdev.features.room.api.seat.SeatDTO
+import com.martdev.features.showtime.api.ShowtimeDTO
+import com.martdev.features.showtime.api.UpdateShowtimeStatusRequest
+import com.martdev.features.showtime.domain.model.ShowtimeStatus
 import io.ktor.server.application.*
 import io.ktor.server.plugins.requestvalidation.*
+import kotlin.enums.enumEntries
 
 fun Application.configureRequestValidation() {
     val emailPattern = Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+[a-zA-Z]{2,}$")
@@ -81,6 +85,28 @@ fun Application.configureRequestValidation() {
                 request.seatNumber <= 0 -> invalidResponseResult("Seat number is required")
                 else -> ValidationResult.Valid
             }
+        }
+
+        val showtimeStatusErrorMessage =
+            "Invalid showtime status. Must be one of: ${enumEntries<ShowtimeStatus>().joinToString { it.name }}"
+        validate<ShowtimeDTO> { request ->
+            val isShowtimeStatusValid = enumEntries<ShowtimeStatus>().any { it.name == request.status.uppercase() }
+            when {
+                request.movieId <= 0 -> invalidResponseResult("Invalid movie id")
+                request.roomId <= 0 -> invalidResponseResult("Invalid room id")
+                request.startsAt == null || request.endsAt == null -> invalidResponseResult("Invalid start at or end at")
+                request.startsAt >= request.endsAt -> invalidResponseResult("Start time can't be greater than end time")
+                request.price <= 0 -> invalidResponseResult("Invalid price")
+                !isShowtimeStatusValid -> invalidResponseResult(showtimeStatusErrorMessage)
+                else -> ValidationResult.Valid
+            }
+        }
+
+        validate<UpdateShowtimeStatusRequest> { request ->
+            val isShowtimeStatusValid = enumEntries<ShowtimeStatus>().any { it.name == request.status.uppercase() }
+            if (isShowtimeStatusValid.not()) {
+                invalidResponseResult(showtimeStatusErrorMessage)
+            } else ValidationResult.Valid
         }
     }
 }

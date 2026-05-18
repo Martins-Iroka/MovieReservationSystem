@@ -5,11 +5,7 @@ import com.martdev.features.movies.api.toMovie
 import com.martdev.features.movies.api.toMovieDto
 import com.martdev.features.movies.api.toMovieItemDto
 import com.martdev.features.movies.domain.service.movie.MovieService
-import com.martdev.shared.api.AUTH_JWT
-import com.martdev.shared.api.DataResponse
-import com.martdev.shared.api.getParameterFromPath
-import com.martdev.shared.api.withRole
-import com.martdev.shared.domain.exception.BadRequestException
+import com.martdev.shared.api.*
 import io.ktor.http.*
 import io.ktor.server.auth.*
 import io.ktor.server.request.*
@@ -89,14 +85,4 @@ private fun Route.moviePublicRoute(service: MovieService) {
             call.respond(HttpStatusCode.OK, dataResponse)
         }
     }
-}
-
-private fun RoutingContext.getLimitAndOffset(): Pair<Int, Long> {
-    val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 10
-    val offset = call.request.queryParameters["offset"]?.toLongOrNull() ?: 0L
-    if (limit <= 0 || offset < 0) {
-        throw BadRequestException("'limit' must be positive and 'offset' must be non-negative.")
-    }
-
-    return Pair(limit, offset)
 }

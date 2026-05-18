@@ -4,10 +4,10 @@ import com.martdev.shared.util.getEnvValue
 import io.ktor.server.application.*
 
 data class JWTConfig(
-    val secret: String = "",
-    val exp: Long = 0,
-    val issuer: String = "",
-    val audience: String = ""
+    val secret: String = "test",
+    val exp: Long = 15,
+    val issuer: String = "iss",
+    val audience: String = "aud"
 ) {
     companion object {
         fun fromEnvironment(environment: ApplicationEnvironment): JWTConfig {

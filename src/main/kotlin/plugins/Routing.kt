@@ -5,6 +5,7 @@ import com.martdev.features.movies.api.genre.genreRoute
 import com.martdev.features.movies.api.movie.movieRoute
 import com.martdev.features.room.api.room.roomRoute
 import com.martdev.features.room.api.seat.seatRoute
+import com.martdev.features.showtime.api.showtimeRoute
 import io.ktor.server.application.*
 import io.ktor.server.routing.*
 
@@ -17,6 +18,7 @@ fun Application.configureRouting() {
             genreRoute()
             roomRoute()
             seatRoute()
+            showtimeRoute()
         }
     }
 }
