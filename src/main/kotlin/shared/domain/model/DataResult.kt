@@ -6,6 +6,7 @@ sealed interface DataResult<out T> {
         data class NotFound(val errorMessage: String = "not found") : Failure
         data object UniqueViolation : Failure
         data object ForeignKeyViolation : Failure
+        data class Conflict(val errorMessage: String = "conflict") : Failure
         data class UnknownError(val errorMessage: String, val cause: Throwable = Exception()) : Failure
     }
 }

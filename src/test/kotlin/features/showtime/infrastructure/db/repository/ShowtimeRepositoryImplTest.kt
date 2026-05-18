@@ -219,7 +219,8 @@ class ShowtimeRepositoryImplTest {
     fun `has overlapping showtime`() = runTest {
         val startDate = LocalDateTime(year = 2026, month = 5, day = 18, hour = 12, minute = 37).toInstant(TimeZone.UTC)
         val endDate = LocalDateTime(year = 2026, month = 5, day = 18, hour = 14, minute = 37).toInstant(TimeZone.UTC)
-        val (movieId, roomId) = createMovieAndRoom("APEX")
+        val (movieId, roomId) = createMovieAndRoom("APEX", "Adventure")
+        val (movieId2, _) = createMovieAndRoom("X-MEN")
         val showtime = Showtime(
             movieId = movieId,
             roomId = roomId,
@@ -228,9 +229,15 @@ class ShowtimeRepositoryImplTest {
         )
         repo.createShowtime(showtime)
 
-        val result = repo.hasOverlappingShowtime(roomId, startDate.plus(1.hours), endDate.plus(3.hours))
-        assertTrue(result is DataResult.Success)
-        assertTrue(result.value)
+        val result = repo.createShowtime(
+            showtime.copy(
+                movieId = movieId2,
+                startsAt = startDate.plus(1.hours),
+                endsAt = endDate.plus(3.hours)
+            )
+        )
+
+        assertTrue(result is DataResult.Failure.Conflict)
     }
 
     private suspend fun createMovieAndRoom(

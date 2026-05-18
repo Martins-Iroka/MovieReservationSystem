@@ -61,6 +61,10 @@ fun Application.configureStatusPages() {
             call.respond(HttpStatusCode.BadRequest, errorResponse)
         }
 
+        exception<ConflictException> { call, cause ->
+            val errorResponse = ErrorResponse(cause.message ?: "Conflict")
+            call.respond(status = HttpStatusCode.Conflict, errorResponse)
+        }
         status(HttpStatusCode.TooManyRequests) { call, status ->
             val errorResponse = ErrorResponse("too many request")
             call.respond(status = status, errorResponse)

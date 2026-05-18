@@ -10,11 +10,11 @@ import com.martdev.features.showtime.infrastructure.db.table.ShowtimeTable
 import com.martdev.features.showtime.infrastructure.db.table.toShowtime
 import com.martdev.shared.domain.model.DataResult
 import com.martdev.shared.infrastruce.db.withSuspendTransaction
-import org.jetbrains.exposed.v1.core.*
+import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.dao.id.EntityID
+import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.koin.core.annotation.Single
-import kotlin.time.Instant
 
 @Single
 class ShowtimeRepositoryImpl : ShowtimeRepository {
@@ -102,23 +102,6 @@ class ShowtimeRepositoryImpl : ShowtimeRepository {
             }?.toShowtime() ?: return@withSuspendTransaction DataResult.Failure.NotFound(notFoundMessage)
 
             DataResult.Success(showtime)
-        }
-    }
-
-    override suspend fun hasOverlappingShowtime(
-        roomId: Long,
-        startsAt: Instant,
-        endsAt: Instant,
-        excludeId: Long
-    ): DataResult<Boolean> {
-        return withSuspendTransaction {
-            val exists = ShowtimeEntity.find {
-                (ShowtimeTable.roomId eq roomId) and
-                        (ShowtimeTable.startsAt less endsAt) and
-                        (ShowtimeTable.endsAt greater startsAt) and
-                        (ShowtimeTable.id neq excludeId)
-            }.any()
-            DataResult.Success(exists)
         }
     }
 }

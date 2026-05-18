@@ -57,6 +57,7 @@ fun handleDbException(e: ExposedSQLException): DataResult.Failure {
     return when (e.sqlState) {
         "23505" -> DataResult.Failure.UniqueViolation
         "23503" -> DataResult.Failure.ForeignKeyViolation
+        "23P01" -> DataResult.Failure.Conflict(e.stackTraceToString())
         else -> DataResult.Failure.UnknownError(e.stackTraceToString())
     }
 }
