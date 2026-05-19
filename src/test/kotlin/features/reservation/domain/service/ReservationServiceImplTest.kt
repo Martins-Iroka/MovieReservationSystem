@@ -62,22 +62,6 @@ class ReservationServiceImplTest {
         service = ReservationServiceImpl(repo, showtimeService)
     }
 
-    // -- createReservation --
-
-    @Test
-    fun `createReservation throws BadRequest when seatIds is empty`() = runTest {
-        assertThrows<BadRequestException> {
-            service.createReservation(userId, showtimeId, emptyList())
-        }
-    }
-
-    @Test
-    fun `createReservation throws BadRequest when seatIds contain duplicates`() = runTest {
-        assertThrows<BadRequestException> {
-            service.createReservation(userId, showtimeId, listOf(1L, 1L, 2L))
-        }
-    }
-
     @Test
     fun `createReservation throws BadRequest when showtime is not SCHEDULED`() = runTest {
         coEvery { showtimeService.getShowtimeById(showtimeId) } returns

@@ -3,6 +3,7 @@ package com.martdev.plugins
 import com.martdev.features.auth.api.request.*
 import com.martdev.features.movies.api.genre.GenreDTO
 import com.martdev.features.movies.api.movie.MovieDTO
+import com.martdev.features.reservation.api.CreateReservationRequest
 import com.martdev.features.room.api.room.RoomDTO
 import com.martdev.features.room.api.seat.SeatDTO
 import com.martdev.features.showtime.api.ShowtimeDTO
@@ -107,6 +108,15 @@ fun Application.configureRequestValidation() {
             if (isShowtimeStatusValid.not()) {
                 invalidResponseResult(showtimeStatusErrorMessage)
             } else ValidationResult.Valid
+        }
+
+        validate<CreateReservationRequest> { request ->
+            when {
+                request.showtimeId <= 0 -> invalidResponseResult("Invalid showtime id")
+                request.seatIds.isEmpty() -> invalidResponseResult("Seat(s) is required")
+                request.seatIds.size != request.seatIds.distinct().size -> invalidResponseResult("Duplicate seats in request")
+                else -> ValidationResult.Valid
+            }
         }
     }
 }

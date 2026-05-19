@@ -22,8 +22,6 @@ class ReservationServiceImpl(
         showtimeId: Long,
         seatIds: List<Long>
     ): Reservation {
-        if (seatIds.isEmpty()) throw BadRequestException("At least one seat must be selected")
-        if (seatIds.size != seatIds.distinct().size) throw BadRequestException("Duplicate seats in request")
 
         val showtime = showtimeService.getShowtimeById(showtimeId) // throws NotfoundException if missing
         if (showtime.status != ShowtimeStatus.SCHEDULED) {
