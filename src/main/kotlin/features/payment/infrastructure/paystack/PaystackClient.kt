@@ -7,11 +7,7 @@ import com.martdev.features.payment.infrastructure.paystack.dto.VerifyResponse
 interface PaystackClient {
     suspend fun initializeTransaction(
         email: String,
-        amount: Long,
-        reference: String,
-        callbackUrl: String,
-        currency: String,
-        metadata: Map<String, String>,
+        amount: Long
     ): InitializeResponse
 
     suspend fun verifyTransaction(reference: String): VerifyResponse

@@ -26,21 +26,13 @@ class PaystackHttpClient(
 
     override suspend fun initializeTransaction(
         email: String,
-        amount: Long,
-        reference: String,
-        callbackUrl: String,
-        currency: String,
-        metadata: Map<String, String>,
+        amount: Long
     ): InitializeResponse {
         val response = client.post("${config.baseUrl}/transaction/initialize") {
             setBody(
                 InitializeRequest(
                     email = email,
-                    amount = amount,
-                    reference = reference,
-                    callbackUrl = callbackUrl,
-                    currency = currency,
-                    metadata = metadata,
+                    amount = amount
                 )
             )
         }

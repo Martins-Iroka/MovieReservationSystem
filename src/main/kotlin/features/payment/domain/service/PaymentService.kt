@@ -25,6 +25,7 @@ interface PaymentService {
 
 data class InitializePaymentResult(
     val authorizationUrl: String,
+    val accessCode: String,
     val reference: String,
     val reservationId: Long,
 )

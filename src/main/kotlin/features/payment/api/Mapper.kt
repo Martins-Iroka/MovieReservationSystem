@@ -21,6 +21,7 @@ fun Payment.toPaymentDTO() = PaymentDTO(
 
 fun InitializePaymentResult.toInitializeResponse() = InitializePaymentResponse(
     authorizationUrl = authorizationUrl,
+    accessCode = accessCode,
     reference = reference,
     reservationId = reservationId,
 )

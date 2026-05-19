@@ -46,6 +46,7 @@ class PaymentRouterTest {
     fun `POST initialize returns 201 with authorization_url`() = testApplication {
         coEvery { paymentService.initializePayment(any(), any()) } returns InitializePaymentResult(
             authorizationUrl = "https://paystack.co/pay/abc",
+            accessCode = "code",
             reference = "ref",
             reservationId = 1L,
         )

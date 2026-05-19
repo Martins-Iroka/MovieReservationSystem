@@ -20,6 +20,7 @@ object PaymentTable : LongIdTable("payments") {
     val currency = varchar("currency", 8).default("NGN")
     val status = setEnumeration<PaymentStatus>("status", "payment_status")
     val authorizationUrl = text("authorization_url").nullable()
+    val accessCode = text("access_code").nullable()
     val paystackTransactionId = varchar("paystack_transaction_id", 100).nullable()
     val gatewayResponse = text("gateway_response").nullable()
     val paidAt = timestamp("paid_at").nullable()
@@ -38,6 +39,7 @@ class PaymentEntity(id: EntityID<Long>) : LongEntity(id) {
     var currency by PaymentTable.currency
     var status by PaymentTable.status
     var authorizationUrl by PaymentTable.authorizationUrl
+    var accessCode by PaymentTable.accessCode
     var paystackTransactionId by PaymentTable.paystackTransactionId
     var gatewayResponse by PaymentTable.gatewayResponse
     var paidAt by PaymentTable.paidAt
@@ -55,6 +57,7 @@ fun PaymentEntity.toPayment() = Payment(
     currency = currency,
     status = status,
     authorizationUrl = authorizationUrl,
+    accessCode = accessCode,
     paystackTransactionId = paystackTransactionId,
     gatewayResponse = gatewayResponse,
     paidAt = paidAt,

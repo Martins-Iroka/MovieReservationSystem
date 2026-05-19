@@ -12,6 +12,7 @@ data class Payment(
     val currency: String = "NGN",
     val status: PaymentStatus = PaymentStatus.INITIATED,
     val authorizationUrl: String? = null,
+    val accessCode: String? = null,
     val paystackTransactionId: String? = null,
     val gatewayResponse: String? = null,
     val paidAt: Instant? = null,

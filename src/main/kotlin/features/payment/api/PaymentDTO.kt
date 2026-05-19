@@ -12,6 +12,7 @@ data class InitializePaymentRequest(
 @Serializable
 data class InitializePaymentResponse(
     @SerialName("authorization_url") val authorizationUrl: String,
+    @SerialName("access_code") val accessCode: String,
     val reference: String,
     @SerialName("reservation_id") val reservationId: Long,
 )

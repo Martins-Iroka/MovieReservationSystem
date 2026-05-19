@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS payments
     currency                VARCHAR(8)                  NOT NULL DEFAULT 'NGN',
     status                  payment_status              NOT NULL,
     authorization_url       TEXT,
+    access_code TEXT,
     paystack_transaction_id VARCHAR(100),
     gateway_response        TEXT,
     paid_at                 TIMESTAMP(0) WITH TIME ZONE,

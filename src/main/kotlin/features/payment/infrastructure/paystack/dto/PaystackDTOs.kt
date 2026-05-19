@@ -6,11 +6,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class InitializeRequest(
     val email: String,
-    val amount: Long,
-    val reference: String,
-    @SerialName("callback_url") val callbackUrl: String,
-    val currency: String,
-    val metadata: Map<String, String> = emptyMap(),
+    val amount: Long
 )
 
 @Serializable

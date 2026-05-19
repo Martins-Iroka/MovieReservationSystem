@@ -64,14 +64,7 @@ class PaymentServiceImpl(
 
         val response = paystackClient.initializeTransaction(
             email = email,
-            amount = paystackAmount,
-            reference = reference,
-            callbackUrl = config.callbackUrl,
-            currency = config.currency,
-            metadata = mapOf(
-                "reservation_id" to reservationId.toString(),
-                "user_id" to userId.toString(),
-            ),
+            amount = paystackAmount
         )
 
         val data = response.data
@@ -85,11 +78,13 @@ class PaymentServiceImpl(
             currency = config.currency,
             status = PaymentStatus.PENDING,
             authorizationUrl = data.authorizationUrl,
+            accessCode = data.accessCode
         )
         paymentRepository.createPayment(payment).returnValue()
 
         return InitializePaymentResult(
             authorizationUrl = data.authorizationUrl,
+            accessCode = data.accessCode,
             reference = data.reference.ifBlank { reference },
             reservationId = reservationId,
         )

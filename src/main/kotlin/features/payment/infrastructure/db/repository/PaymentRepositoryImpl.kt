@@ -29,6 +29,7 @@ class PaymentRepositoryImpl : PaymentRepository {
             currency = payment.currency
             status = payment.status
             authorizationUrl = payment.authorizationUrl
+            accessCode = payment.accessCode
             paystackTransactionId = payment.paystackTransactionId
             gatewayResponse = payment.gatewayResponse
             paidAt = payment.paidAt

@@ -111,10 +111,6 @@ class PaymentServiceImplTest {
             paystackClient.initializeTransaction(
                 email = "u@x.io",
                 amount = capture(amountCaptured),
-                reference = any(),
-                callbackUrl = config.callbackUrl,
-                currency = "NGN",
-                metadata = any(),
             )
         } returns InitializeResponse(
             status = true,

@@ -45,10 +45,6 @@ class PaystackHttpClientTest {
         val response = client.initializeTransaction(
             email = "u@x.io",
             amount = 500000L,
-            reference = "ref_xyz",
-            callbackUrl = config.callbackUrl,
-            currency = "NGN",
-            metadata = mapOf("reservation_id" to "1"),
         )
 
         assertEquals("Bearer sk_test_abc", capturedAuth)
