@@ -129,7 +129,7 @@ class PaymentServiceImpl(
 
         val data = event.data
         when (event.event) {
-            "charge.success", "charge.failed" -> {
+            "charge.success" -> {
                 applyChargeResult(
                     reference = data.reference,
                     paystackStatus = data.status,
