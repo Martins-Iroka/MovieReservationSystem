@@ -8,8 +8,8 @@ interface ReservationService {
     suspend fun getMyReservationById(id: Long, userId: Long): Reservation    // user — ownership enforced
     suspend fun getMyReservations(userId: Long): List<Reservation>
     suspend fun getAllReservations(limit: Int, offset: Long): List<Reservation>
-    suspend fun confirmReservation(id: Long, userId: Long): Reservation
-    suspend fun cancelReservation(id: Long, userId: Long): Reservation       // user cancel
+    suspend fun confirmReservationFromPayment(id: Long): Reservation         // invoked by payment flow
+    suspend fun cancelReservation(id: Long, userId: Long): Reservation       // user cancel (PENDING only)
     suspend fun cancelReservationAdmin(id: Long): Reservation                // admin cancel
     suspend fun cancelExpiredReservations()                                  // background job
 }

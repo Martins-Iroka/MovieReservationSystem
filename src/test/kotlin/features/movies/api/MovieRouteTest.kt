@@ -95,7 +95,7 @@ class MovieRouteTest {
         }
         val client = clientConfiguration(adminToken)
         client.delete("/admin/movie/delete-movie/1").apply {
-            assertEquals(HttpStatusCode.OK, status)
+            assertEquals(HttpStatusCode.NoContent, status)
         }
     }
 
@@ -109,7 +109,7 @@ class MovieRouteTest {
             configure()
         }
         val client = clientConfiguration(adminToken)
-        client.put("/admin/movie/update-movie") {
+        client.put("/admin/movie/update-movie/1") {
             setBody(movie)
         }.apply {
             assertEquals(HttpStatusCode.OK, status)

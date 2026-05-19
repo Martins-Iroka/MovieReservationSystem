@@ -2,6 +2,7 @@ package com.martdev.plugins
 
 import com.martdev.config.DatabaseConfig
 import com.martdev.config.JWTConfig
+import com.martdev.config.PaystackConfig
 import com.martdev.config.StytchConfig
 import io.ktor.server.application.*
 import org.koin.dsl.module
@@ -14,6 +15,7 @@ fun Application.configureKoin() {
         single { JWTConfig.fromEnvironment(environment) }
         single { DatabaseConfig.fromEnvironment(environment) }
         single { StytchConfig.fromEnvironment(environment) }
+        single { PaystackConfig.fromEnvironment(environment) }
     }
 
     install(Koin) {

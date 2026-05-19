@@ -21,7 +21,6 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import kotlin.test.assertEquals
 import kotlin.time.Clock
-import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 
 @ExtendWith(MockKExtension::class)
@@ -176,56 +175,37 @@ class ReservationServiceImplTest {
         assertEquals(list, result)
     }
 
-    // -- confirmReservation --
+    // -- confirmReservationFromPayment --
 
     @Test
-    fun `confirmReservation throws ForbiddenException when caller does not own the reservation`() = runTest {
-        coEvery { repo.getReservationById(reservationId) } returns DataResult.Success(pendingReservation)
+    fun `confirmReservationFromPayment is a no-op when reservation is already CONFIRMED`() = runTest {
+        val confirmed = pendingReservation.copy(status = ReservationStatus.CONFIRMED)
+        coEvery { repo.getReservationById(reservationId) } returns DataResult.Success(confirmed)
 
-        assertThrows<ForbiddenException> {
-            service.confirmReservation(reservationId, userId = 999L)
-        }
+        val result = service.confirmReservationFromPayment(reservationId)
+
+        assertEquals(confirmed, result)
     }
 
     @Test
-    fun `confirmReservation throws ConflictException when reservation is already CONFIRMED`() = runTest {
-        coEvery { repo.getReservationById(reservationId) } returns
-                DataResult.Success(pendingReservation.copy(status = ReservationStatus.CONFIRMED))
-
-        assertThrows<ConflictException> {
-            service.confirmReservation(reservationId, userId)
-        }
-    }
-
-    @Test
-    fun `confirmReservation throws BadRequestException when reservation is CANCELLED`() = runTest {
+    fun `confirmReservationFromPayment throws BadRequestException when reservation is CANCELLED`() = runTest {
         coEvery { repo.getReservationById(reservationId) } returns
                 DataResult.Success(pendingReservation.copy(status = ReservationStatus.CANCELLED))
 
         assertThrows<BadRequestException> {
-            service.confirmReservation(reservationId, userId)
+            service.confirmReservationFromPayment(reservationId)
         }
     }
 
     @Test
-    fun `confirmReservation throws BadRequestException when reservation has expired`() = runTest {
-        coEvery { repo.getReservationById(reservationId) } returns
-                DataResult.Success(pendingReservation.copy(expiresAt = now.minus(1.hours)))
-
-        assertThrows<BadRequestException> {
-            service.confirmReservation(reservationId, userId)
-        }
-    }
-
-    @Test
-    fun `confirmReservation returns the confirmed reservation on success`() = runTest {
+    fun `confirmReservationFromPayment returns the confirmed reservation on success`() = runTest {
         val confirmed = pendingReservation.copy(status = ReservationStatus.CONFIRMED)
         coEvery { repo.getReservationById(reservationId) } returns DataResult.Success(pendingReservation)
         coEvery {
             repo.updateReservationStatus(reservationId, ReservationStatus.CONFIRMED)
         } returns DataResult.Success(confirmed)
 
-        val result = service.confirmReservation(reservationId, userId)
+        val result = service.confirmReservationFromPayment(reservationId)
 
         assertEquals(confirmed, result)
     }
@@ -247,6 +227,16 @@ class ReservationServiceImplTest {
                 DataResult.Success(pendingReservation.copy(status = ReservationStatus.CANCELLED))
 
         assertThrows<ConflictException> {
+            service.cancelReservation(reservationId, userId)
+        }
+    }
+
+    @Test
+    fun `cancelReservation throws BadRequestException when reservation is CONFIRMED`() = runTest {
+        coEvery { repo.getReservationById(reservationId) } returns
+                DataResult.Success(pendingReservation.copy(status = ReservationStatus.CONFIRMED))
+
+        assertThrows<BadRequestException> {
             service.cancelReservation(reservationId, userId)
         }
     }

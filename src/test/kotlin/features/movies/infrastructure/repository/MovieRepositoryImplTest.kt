@@ -241,7 +241,7 @@ class MovieRepositoryImplTest {
 
         // Assert
         assertTrue(result is DataResult.Failure.UnknownError)
-        assertEquals("Failed to delete movie with id $nonExistentId", result.errorMessage)
+        assertEquals("Failed to delete movie", result.errorMessage)
     }
 
     private suspend fun createAndSaveGenres(vararg names: String): List<Genre> {

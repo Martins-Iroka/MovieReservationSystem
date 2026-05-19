@@ -6,6 +6,7 @@ import com.martdev.features.reservation.api.CreateReservationRequest
 import com.martdev.features.reservation.api.reservationRoute
 import com.martdev.features.reservation.domain.model.Reservation
 import com.martdev.features.reservation.domain.model.ShowtimeSeat
+import com.martdev.features.reservation.domain.service.ReservationCancellationService
 import com.martdev.features.reservation.domain.service.ReservationService
 import com.martdev.features.reservation.domain.service.ShowtimeSeatService
 import features.utils.clientConfiguration
@@ -33,11 +34,15 @@ class ReservationRouteTest {
     @MockK
     private lateinit var showtimeSeatService: ShowtimeSeatService
 
+    @MockK
+    private lateinit var cancellationService: ReservationCancellationService
+
     private val jwtConfig = JWTConfig()
 
     private val reservationModule = module {
         single { reservationService }
         single { showtimeSeatService }
+        single { cancellationService }
         single { jwtConfig }
     }
 
@@ -93,7 +98,7 @@ class ReservationRouteTest {
     @Test
     fun testPatchAdminReservationCancelReservationid() = testApplication {
         coEvery {
-            reservationService.cancelReservationAdmin(any())
+            cancellationService.cancelByAdmin(any())
         } returns Reservation()
 
         application {
@@ -174,21 +179,6 @@ class ReservationRouteTest {
         }
         val client = clientConfiguration(userToken)
         client.get("/reservation/available-seats/1").apply {
-            assertEquals(HttpStatusCode.OK, status, bodyAsText())
-        }
-    }
-
-    @Test
-    fun testPatchReservationConfirmReservationid() = testApplication {
-        coEvery {
-            reservationService.confirmReservation(any(), any())
-        } returns Reservation()
-
-        application {
-            appConfig()
-        }
-        val client = clientConfiguration(userToken)
-        client.patch("/reservation/confirm/1").apply {
             assertEquals(HttpStatusCode.OK, status, bodyAsText())
         }
     }

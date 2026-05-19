@@ -17,6 +17,14 @@ stytch:
   stytchID: ${STYTCH_PROJECT_ID}
   stytchSecret: ${STYTCH_SECRET}
 
+paystack:
+  secretKey: ${PAYSTACK_SECRET_KEY}
+  publicKey: ${PAYSTACK_PUBLIC_KEY}
+  baseUrl: ${PAYSTACK_BASE_URL:-https://api.paystack.co}
+  callbackUrl: ${PAYSTACK_CALLBACK_URL}
+  webhookSecret: ${PAYSTACK_WEBHOOK_SECRET}
+  currency: ${PAYSTACK_CURRENCY:-NGN}
+
 jwt:
   secret: ${JWT_SECRET}
   issuer: ${JWT_ISSUER}

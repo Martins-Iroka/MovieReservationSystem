@@ -17,6 +17,10 @@ kotlin {
     jvmToolchain(21)
 }
 dependencies {
+    implementation(ktorLibs.client.core)
+    implementation(ktorLibs.client.cio)
+    implementation(ktorLibs.client.contentNegotiation)
+    implementation(ktorLibs.client.logging)
     implementation(ktorLibs.serialization.kotlinx.json)
     implementation(ktorLibs.server.auth)
     implementation(ktorLibs.server.auth.jwt)
@@ -54,7 +58,7 @@ dependencies {
     ksp(libs.koin.annotation.compiler)
 
     testImplementation(kotlin("test"))
-    testImplementation(ktorLibs.client.contentNegotiation)
+    testImplementation(ktorLibs.client.mock)
     testImplementation(ktorLibs.server.testHost)
     testImplementation(libs.junit)
     testImplementation(libs.junit5)

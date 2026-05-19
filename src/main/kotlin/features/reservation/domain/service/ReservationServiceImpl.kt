@@ -33,7 +33,7 @@ class ReservationServiceImpl(
             userId = userId,
             showtimeId = showtimeId,
             totalAmount = totalAmount,
-            expiresAt = Clock.System.now().plus(10.minutes)
+            expiresAt = Clock.System.now().plus(15.minutes)
         )
 
         return when (val result = repo.createReservation(reservation, seatIds)) {
@@ -68,15 +68,10 @@ class ReservationServiceImpl(
         return repo.getAllReservations(limit, offset).returnValue()
     }
 
-    override suspend fun confirmReservation(
-        id: Long,
-        userId: Long
-    ): Reservation {
+    override suspend fun confirmReservationFromPayment(id: Long): Reservation {
         val reservation = repo.getReservationById(id).returnValue()
-        if (reservation.userId != userId) throw ForbiddenException()
-        if (reservation.status == ReservationStatus.CONFIRMED) throw ConflictException("Reservation is already confirmed")
+        if (reservation.status == ReservationStatus.CONFIRMED) return reservation
         if (reservation.status == ReservationStatus.CANCELLED) throw BadRequestException("Cannot confirm a cancelled reservation")
-        if (Clock.System.now() > reservation.expiresAt) throw BadRequestException("Reservation has expired")
 
         return repo.updateReservationStatus(id, ReservationStatus.CONFIRMED).returnValue()
     }
@@ -88,6 +83,9 @@ class ReservationServiceImpl(
         val reservation = repo.getReservationById(id).returnValue()
         if (reservation.userId != userId) throw ForbiddenException()
         if (reservation.status == ReservationStatus.CANCELLED) throw ConflictException("Reservation is already cancelled")
+        if (reservation.status == ReservationStatus.CONFIRMED) {
+            throw BadRequestException("Contact support to cancel a confirmed reservation")
+        }
 
         return repo.updateReservationStatus(id, ReservationStatus.CANCELLED).returnValue()
     }

@@ -63,7 +63,7 @@ class GenreRouteTest {
         }
         val client = clientConfiguration(adminToken)
         client.delete("/admin/genre/delete-genre/50").apply {
-            assertEquals(HttpStatusCode.OK, status)
+            assertEquals(HttpStatusCode.NoContent, status)
         }
     }
 

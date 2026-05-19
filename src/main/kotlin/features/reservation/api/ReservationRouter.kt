@@ -1,6 +1,7 @@
 package com.martdev.features.reservation.api
 
 import com.martdev.features.auth.domain.model.Role
+import com.martdev.features.reservation.domain.service.ReservationCancellationService
 import com.martdev.features.reservation.domain.service.ReservationService
 import com.martdev.features.reservation.domain.service.ShowtimeSeatService
 import com.martdev.shared.api.*
@@ -18,13 +19,15 @@ const val adminReservationPath = "/admin$reservationPath"
 fun Route.reservationRoute() {
     val reservationService by inject<ReservationService>()
     val showtimeSeatService by inject<ShowtimeSeatService>()
-    adminReservationRoutes(reservationService, showtimeSeatService)
+    val cancellationService by inject<ReservationCancellationService>()
+    adminReservationRoutes(reservationService, showtimeSeatService, cancellationService)
     userReservationRoutes(reservationService, showtimeSeatService)
 }
 
 private fun Route.adminReservationRoutes(
     reservationService: ReservationService,
-    showtimeSeatService: ShowtimeSeatService
+    showtimeSeatService: ShowtimeSeatService,
+    cancellationService: ReservationCancellationService,
 ) {
     authenticate(AUTH_JWT) {
         withRole(Role.ADMIN) {
@@ -52,7 +55,7 @@ private fun Route.adminReservationRoutes(
 
                 patch("/cancel/{reservation_id}") {
                     val reservationId = getParameterFromPath("reservation_id")
-                    val result = reservationService.cancelReservationAdmin(reservationId).toReservationDTO()
+                    val result = cancellationService.cancelByAdmin(reservationId).toReservationDTO()
                     call.respond(HttpStatusCode.OK, DataResponse(result))
                 }
             }
@@ -97,13 +100,6 @@ private fun Route.userReservationRoutes(
                 val showtimeId = getParameterFromPath("showtime_id")
                 val result = showtimeSeatService.getAvailableSeats(showtimeId)
                     .map { it.toShowtimeSeatDTO() }
-                call.respond(HttpStatusCode.OK, DataResponse(result))
-            }
-
-            patch("/confirm/{reservation_id}") {
-                val reservationId = getParameterFromPath("reservation_id")
-                val userId = call.extractUserId()
-                val result = reservationService.confirmReservation(reservationId, userId).toReservationDTO()
                 call.respond(HttpStatusCode.OK, DataResponse(result))
             }
 
