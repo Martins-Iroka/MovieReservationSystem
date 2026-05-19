@@ -6,10 +6,9 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.exposed.v1.core.StdOutSqlLogger
 import org.jetbrains.exposed.v1.exceptions.ExposedSQLException
 import org.jetbrains.exposed.v1.jdbc.JdbcTransaction
-import org.jetbrains.exposed.v1.jdbc.transactions.inTopLevelSuspendTransaction
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
 
-suspend fun <T> withTopLevelSuspendTransaction(block: suspend JdbcTransaction.() -> DataResult<T>): DataResult<T> =
+/*suspend fun <T> withTopLevelSuspendTransaction(block: suspend JdbcTransaction.() -> DataResult<T>): DataResult<T> =
     withContext(Dispatchers.IO) {
         try {
             inTopLevelSuspendTransaction {
@@ -29,7 +28,7 @@ suspend fun <T> withTopLevelSuspendTransaction(block: suspend JdbcTransaction.()
         } catch (e: Exception) {
             DataResult.Failure.UnknownError(e.stackTraceToString())
         }
-    }
+    }*/
 
 suspend fun <T> withSuspendTransaction(block: suspend JdbcTransaction.() -> DataResult<T>): DataResult<T> =
     withContext(Dispatchers.IO) {
