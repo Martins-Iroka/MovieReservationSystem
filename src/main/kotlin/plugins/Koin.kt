@@ -1,5 +1,6 @@
 package com.martdev.plugins
 
+import com.martdev.config.CorsConfig
 import com.martdev.config.DatabaseConfig
 import com.martdev.config.JWTConfig
 import com.martdev.config.PaystackConfig
@@ -16,6 +17,7 @@ fun Application.configureKoin() {
         single { DatabaseConfig.fromEnvironment(environment) }
         single { StytchConfig.fromEnvironment(environment) }
         single { PaystackConfig.fromEnvironment(environment) }
+        single { CorsConfig.fromEnvironment(environment) }
     }
 
     install(Koin) {

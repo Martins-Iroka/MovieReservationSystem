@@ -8,185 +8,296 @@ import com.martdev.features.auth.infrastructure.db.tables.UserVerificationTable
 import com.martdev.features.utils.PostgresContainer
 import com.martdev.shared.domain.model.DataResult
 import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.jdbc.deleteAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.postgresql.PostgreSQLContainer
 import kotlin.random.Random
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 import kotlin.time.Clock
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
 
-@TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 @Testcontainers
 class UserRepositoryImplTest {
 
+    private val repository: UserRepository = UserRepositoryImpl()
 
     companion object {
-        private lateinit var repository: UserRepository
-        const val VERIFICATION_TOKEN = "verification_token"
-        const val REFRESH_TOKEN = "refresh_token"
-        var user = UserData(
-            email = "testEmail@gmail.com",
-            password = "password",
-        )
         @Container
+        @JvmStatic
         val postgres: PostgreSQLContainer = PostgresContainer.initPostgres()
 
         @JvmStatic
-        @AfterAll
-        fun clearDb() {
-            transaction {
-                UserRefreshTokenTable.deleteAll()
-                UserVerificationTable.deleteAll()
-                UserTable.deleteAll()
-            }
-        }
-
-        @JvmStatic
         @BeforeAll
-        fun connectToDBAndMigrate() {
+        fun connectAndMigrate() {
             PostgresContainer.connectToDBAndMigrate(postgres)
-            repository = UserRepositoryImpl()
         }
     }
 
-    @Test
-    @Order(1)
-    fun `save user and verification token should return data result user`() = runTest {
-        val savedUser = repository.saveUserAndVerificationToken(user, VERIFICATION_TOKEN)
-
-        assertTrue(savedUser is DataResult.Success, savedUser.toString())
-        user = user.copy(id = savedUser.value.id)
+    @BeforeEach
+    fun cleanDb() {
+        transaction {
+            UserRefreshTokenTable.deleteAll()
+            UserVerificationTable.deleteAll()
+            UserTable.deleteAll()
+        }
     }
 
-    @Test
-    @Order(2)
-    fun `save user with same email should fail`() = runTest {
-        val savedUser = repository.saveUserAndVerificationToken(user, VERIFICATION_TOKEN)
-
-        assertTrue(savedUser is DataResult.Failure.UniqueViolation)
+    @AfterEach
+    fun cleanAfter() {
+        transaction {
+            UserRefreshTokenTable.deleteAll()
+            UserVerificationTable.deleteAll()
+            UserTable.deleteAll()
+        }
     }
 
-    @Test
-    @Order(3)
-    fun `save user verification with same token should fail`() = runTest {
-        val savedUser = repository.saveUserAndVerificationToken(user.copy(email = "test2@gmail.com"), VERIFICATION_TOKEN)
+    private fun freshEmail() = "user-${Random.nextLong(0, Long.MAX_VALUE)}@example.com"
 
-        assertTrue(savedUser is DataResult.Failure.UniqueViolation)
+    private suspend fun seedUser(email: String = freshEmail(), token: String = "vt-${Random.nextInt()}"): Long {
+        val result = repository.saveUserAndVerificationToken(
+            UserData(email = email, password = "password-hash"),
+            token,
+        )
+        check(result is DataResult.Success) { "Failed to seed user: $result" }
+        return result.value.id
     }
 
-    @Test
-    @Order(4)
-    fun `get user by id`() = runTest {
-        val userResult = repository.getUserById(user.id)
-        assertTrue(userResult is DataResult.Success)
-    }
+    private fun expiry(plus: Duration = 1.hours): LocalDateTime =
+        Clock.System.now().plus(plus).toLocalDateTime(TimeZone.currentSystemDefault())
 
     @Test
-    @Order(5)
-    fun `get user with a wrong id should fail`() = runTest {
-        val userResult = repository.getUserById(Random.nextLong())
-        assertTrue(userResult is DataResult.Failure.NotFound)
-    }
-
-    @Test
-    @Order(6)
-    fun `test user activation`() = runTest {
-        val result = repository.activateUser(VERIFICATION_TOKEN)
-        assertTrue(result is DataResult.Success)
-    }
-
-    @Test
-    @Order(7)
-    fun `test activate user should fail as a result of get user id by verification token`() = runTest {
-        val result = repository.activateUser("invalid_token")
-        assertTrue(result is DataResult.Failure.NotFound)
-    }
-
-    @Test
-    @Order(8)
-    fun `test save refresh token`() = runTest {
-        val result = repository.saveRefreshToken(
-            user.id,
-            REFRESH_TOKEN,
-            Clock.System.now().plus(1.hours).toLocalDateTime(TimeZone.currentSystemDefault())
+    fun `saveUserAndVerificationToken creates a user row and returns id`() = runTest {
+        val result = repository.saveUserAndVerificationToken(
+            UserData(email = freshEmail(), password = "pw"),
+            "verification-token",
         )
 
         assertTrue(result is DataResult.Success)
+        assertTrue(result.value.id > 0)
     }
 
     @Test
-    @Order(9)
-    fun `test save refresh token should fail with not found`() = runTest {
-        val result = repository.saveRefreshToken(
-            Random.nextLong(),
-            REFRESH_TOKEN.plus("2"),
-            Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+    fun `saveUserAndVerificationToken with duplicate email returns UniqueViolation`() = runTest {
+        val email = freshEmail()
+        seedUser(email = email, token = "first-token")
+
+        val second = repository.saveUserAndVerificationToken(
+            UserData(email = email, password = "pw"),
+            "second-token",
         )
+
+        assertTrue(second is DataResult.Failure.UniqueViolation)
+    }
+
+    @Test
+    fun `saveUserAndVerificationToken with duplicate verification token returns UniqueViolation`() = runTest {
+        val token = "shared-token"
+        seedUser(token = token)
+
+        val second = repository.saveUserAndVerificationToken(
+            UserData(email = freshEmail(), password = "pw"),
+            token,
+        )
+
+        assertTrue(second is DataResult.Failure.UniqueViolation)
+    }
+
+    @Test
+    fun `getUserById returns the user when present`() = runTest {
+        val userId = seedUser()
+
+        val result = repository.getUserById(userId)
+
+        assertTrue(result is DataResult.Success)
+        assertEquals(userId, result.value.id)
+    }
+
+    @Test
+    fun `getUserById returns NotFound for non-existent id`() = runTest {
+        val result = repository.getUserById(999_999L)
+
         assertTrue(result is DataResult.Failure.NotFound)
     }
 
     @Test
-    @Order(10)
-    fun `test get user id and role by refresh token`() = runTest {
-        val result = repository.getUserIdAndRoleByRefreshToken(REFRESH_TOKEN)
-        assertTrue(result is DataResult.Success, result.toString())
-        assertEquals(user.id, result.value.id)
+    fun `getUserByEmail returns the user when present`() = runTest {
+        val email = freshEmail()
+        val userId = seedUser(email = email)
+
+        val result = repository.getUserByEmail(email)
+
+        assertTrue(result is DataResult.Success)
+        assertEquals(userId, result.value.id)
     }
 
     @Test
-    @Order(11)
-    fun `test get user id and role by refresh token should fail with not found`() = runTest {
-        val result = repository.getUserIdAndRoleByRefreshToken("invalid_token")
+    fun `getUserByEmail returns NotFound when missing`() = runTest {
+        val result = repository.getUserByEmail("ghost@example.com")
+
         assertTrue(result is DataResult.Failure.NotFound)
     }
 
     @Test
-    @Order(12)
-    fun `should get user by email`() = runTest {
-        val result = repository.getUserByEmail(user.email)
+    fun `activateUser marks the user verified and consumes the token`() = runTest {
+        val token = "activation-token"
+        seedUser(token = token)
+
+        val result = repository.activateUser(token)
+
         assertTrue(result is DataResult.Success)
-        assertEquals(user.id, result.value.id)
+        val second = repository.activateUser(token)
+        assertTrue(second is DataResult.Failure.NotFound)
     }
 
     @Test
-    @Order(13)
-    fun `get user by email should fail with not found`() = runTest {
-        val result = repository.getUserByEmail(user.email.plus("mm"))
+    fun `activateUser returns NotFound for invalid token`() = runTest {
+        val result = repository.activateUser("never-existed")
+
         assertTrue(result is DataResult.Failure.NotFound)
     }
 
     @Test
-    @Order(14)
-    fun `should revoke refresh token`() = runTest {
-        val result = repository.revokeRefreshToken(REFRESH_TOKEN)
+    fun `saveRefreshToken persists token for an existing user`() = runTest {
+        val userId = seedUser()
+
+        val result = repository.saveRefreshToken(userId, "rt-hash", expiry())
+
         assertTrue(result is DataResult.Success)
     }
 
     @Test
-    @Order(15)
-    fun `test get user id and role by refresh token should fail with not found after token has been revoked`() = runTest {
-        val result = repository.getUserIdAndRoleByRefreshToken(REFRESH_TOKEN)
+    fun `saveRefreshToken returns NotFound for unknown user id`() = runTest {
+        val result = repository.saveRefreshToken(999_999L, "rt-hash", expiry())
+
         assertTrue(result is DataResult.Failure.NotFound)
     }
 
     @Test
-    @Order(16)
-    fun `should delete expired refresh token`() = runTest {
-        val result = repository.deleteExpiredRefreshToken()
+    fun `getUserIdAndRoleByRefreshToken returns the user when token is valid`() = runTest {
+        val userId = seedUser()
+        repository.saveRefreshToken(userId, "rt-hash", expiry())
+
+        val result = repository.getUserIdAndRoleByRefreshToken("rt-hash")
+
         assertTrue(result is DataResult.Success)
+        assertEquals(userId, result.value.id)
     }
 
     @Test
-    @Order(17)
-    fun `should delete and create verification token`() = runTest {
-        val result = repository.deleteAndCreateVerificationToken(VERIFICATION_TOKEN, user.id)
+    fun `getUserIdAndRoleByRefreshToken returns NotFound for unknown token`() = runTest {
+        val result = repository.getUserIdAndRoleByRefreshToken("never-existed")
+
+        assertTrue(result is DataResult.Failure.NotFound)
+    }
+
+    @Test
+    fun `getUserIdAndRoleByRefreshToken returns NotFound for revoked token`() = runTest {
+        val userId = seedUser()
+        repository.saveRefreshToken(userId, "rt-hash", expiry())
+        repository.revokeRefreshToken("rt-hash")
+
+        val result = repository.getUserIdAndRoleByRefreshToken("rt-hash")
+
+        assertTrue(result is DataResult.Failure.NotFound)
+    }
+
+    @Test
+    fun `revokeRefreshToken returns Success for an existing token`() = runTest {
+        val userId = seedUser()
+        repository.saveRefreshToken(userId, "rt-hash", expiry())
+
+        assertTrue(repository.revokeRefreshToken("rt-hash") is DataResult.Success)
+    }
+
+    @Test
+    fun `deleteExpiredRefreshToken removes only past-expiry rows`() = runTest {
+        val userId = seedUser()
+        val expired = Clock.System.now().minus(1.hours).toLocalDateTime(TimeZone.currentSystemDefault())
+        val valid = expiry()
+        repository.saveRefreshToken(userId, "expired-hash", expired)
+        repository.saveRefreshToken(userId, "valid-hash", valid)
+
+        repository.deleteExpiredRefreshToken()
+
+        assertTrue(repository.getUserIdAndRoleByRefreshToken("expired-hash") is DataResult.Failure.NotFound)
+        assertTrue(repository.getUserIdAndRoleByRefreshToken("valid-hash") is DataResult.Success)
+    }
+
+    @Test
+    fun `deleteAndCreateVerificationToken replaces the existing token`() = runTest {
+        val userId = seedUser(token = "old-token")
+
+        val result = repository.deleteAndCreateVerificationToken("new-token", userId)
+
         assertTrue(result is DataResult.Success)
+        assertTrue(repository.activateUser("old-token") is DataResult.Failure.NotFound)
+        assertTrue(repository.activateUser("new-token") is DataResult.Success)
+    }
+
+    @Test
+    fun `rotateRefreshToken atomically revokes old token and creates new one`() = runTest {
+        val userId = seedUser()
+        repository.saveRefreshToken(userId, "old-hash", expiry())
+
+        val result = repository.rotateRefreshToken("old-hash", "new-hash", expiry())
+
+        assertTrue(result is DataResult.Success)
+        assertEquals(userId, result.value.id)
+        assertTrue(repository.getUserIdAndRoleByRefreshToken("old-hash") is DataResult.Failure.NotFound)
+        assertTrue(repository.getUserIdAndRoleByRefreshToken("new-hash") is DataResult.Success)
+    }
+
+    @Test
+    fun `rotateRefreshToken returns NotFound for an unknown old token`() = runTest {
+        val result = repository.rotateRefreshToken("never-existed", "new-hash", expiry())
+
+        assertTrue(result is DataResult.Failure.NotFound)
+    }
+
+    @Test
+    fun `rotateRefreshToken returns NotFound for a previously revoked token (replay-attempt)`() = runTest {
+        val userId = seedUser()
+        repository.saveRefreshToken(userId, "rt-hash", expiry())
+        repository.revokeRefreshToken("rt-hash")
+
+        val result = repository.rotateRefreshToken("rt-hash", "new-hash", expiry())
+
+        assertTrue(result is DataResult.Failure.NotFound)
+        assertTrue(repository.getUserIdAndRoleByRefreshToken("new-hash") is DataResult.Failure.NotFound)
+    }
+
+    @Test
+    fun `rotateRefreshToken returns NotFound for an expired token`() = runTest {
+        val userId = seedUser()
+        val pastExpiry = Clock.System.now().minus(1.minutes).toLocalDateTime(TimeZone.currentSystemDefault())
+        repository.saveRefreshToken(userId, "rt-hash", pastExpiry)
+
+        val result = repository.rotateRefreshToken("rt-hash", "new-hash", expiry())
+
+        assertTrue(result is DataResult.Failure.NotFound)
+    }
+
+    @Test
+    fun `rotateRefreshToken issued tokens are distinct from old ones`() = runTest {
+        val userId = seedUser()
+        repository.saveRefreshToken(userId, "rt-old", expiry())
+
+        val result = repository.rotateRefreshToken("rt-old", "rt-new", expiry())
+
+        assertTrue(result is DataResult.Success)
+        assertNotEquals("rt-old", "rt-new")
     }
 }

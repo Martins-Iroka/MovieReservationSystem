@@ -17,7 +17,6 @@ const val loginUserPath = "/login"
 const val refreshTokenPath = "/refresh-token"
 const val resendOTPPath = "/resend-otp"
 
-//todo write test
 fun Route.authRoutes() {
     val service by inject<UserService>()
     route(authenticationPath) {
@@ -33,7 +32,7 @@ fun Route.authRoutes() {
          */
         post(registerPath) {
             val userRequest = call.receive<CreateUserRequest>()
-            val response = service.registerUser(userRequest.toUserData()).toCreateUserResponse()
+            val response = service.registerUser(userRequest.toCredentials()).toCreateUserResponse()
             val dataResponse = DataResponse(response)
             call.respond(status = HttpStatusCode.Created, dataResponse)
         }
@@ -51,7 +50,7 @@ fun Route.authRoutes() {
          */
         post(verifyUserPath) {
             val request = call.receive<UserVerificationRequest>()
-            service.verifyUser(request.toUserData())
+            service.verifyUser(request.toVerificationInput())
             call.respond(HttpStatusCode.OK)
         }
 
@@ -63,15 +62,17 @@ fun Route.authRoutes() {
          * Responses:
          *      - 200 [com.martdev.features.auth.api.response.UserLoginResponse]
          *      - 400 [com.martdev.shared.api.ErrorResponse] Invalid email or password
-         *      - 401 [com.martdev.shared.api.ErrorResponse] Please verify your email before login
          *      - 404 [com.martdev.shared.api.ErrorResponse]
+         *      - 429 [com.martdev.shared.api.ErrorResponse] too many requests
          *      - 500 [com.martdev.shared.api.ErrorResponse]
          */
-        post(loginUserPath) {
-            val request = call.receive<UserLoginRequest>().toUserData()
-            val response = service.loginUser(request).toUserLoginResponse()
-            val dataResponse = DataResponse(response)
-            call.respond(status = HttpStatusCode.OK, dataResponse)
+        rateLimit(RateLimitName("login")) {
+            post(loginUserPath) {
+                val request = call.receive<UserLoginRequest>().toCredentials()
+                val response = service.loginUser(request).toUserLoginResponse()
+                val dataResponse = DataResponse(response)
+                call.respond(status = HttpStatusCode.OK, dataResponse)
+            }
         }
 
         /**

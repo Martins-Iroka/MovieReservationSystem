@@ -13,6 +13,7 @@ import org.jetbrains.exposed.v1.core.dao.id.CompositeID
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.select
+import org.jetbrains.exposed.v1.jdbc.update
 import org.koin.core.annotation.Single
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.hours
@@ -60,6 +61,47 @@ class UserRepositoryImpl : UserRepository {
             if (id.value > 0) {
                 DataResult.Success(Unit)
             } else DataResult.Failure.UnknownError("Failed to save token")
+        }
+    }
+
+    override suspend fun rotateRefreshToken(
+        oldTokenHash: String,
+        newTokenHash: String,
+        newExpiry: LocalDateTime,
+    ): DataResult<UserData> {
+        return withSuspendTransaction {
+            val row = UserTable.join(
+                otherTable = UserRefreshTokenTable,
+                joinType = JoinType.INNER,
+                onColumn = UserTable.id,
+                otherColumn = UserRefreshTokenTable.userId
+            ).select(UserTable.id, UserTable.role).where {
+                (UserRefreshTokenTable.tokenHash eq oldTokenHash) and
+                        (UserRefreshTokenTable.expiresAt.greater(CurrentDateTime)) and
+                        (UserRefreshTokenTable.revoked eq false)
+            }.firstOrNull() ?: return@withSuspendTransaction DataResult.Failure.NotFound()
+
+            val userId = row[UserTable.id].value
+            val role = row[UserTable.role]
+
+            val updatedRows = UserRefreshTokenTable.update({
+                (UserRefreshTokenTable.tokenHash eq oldTokenHash) and
+                        (UserRefreshTokenTable.revoked eq false)
+            }) {
+                it[revoked] = true
+            }
+            if (updatedRows != 1) {
+                return@withSuspendTransaction DataResult.Failure.NotFound()
+            }
+
+            val entity = UserEntity.findById(userId) ?: return@withSuspendTransaction DataResult.Failure.NotFound()
+            UserRefreshTokenEntity.new {
+                userEntity = entity
+                this.tokenHash = newTokenHash
+                expiryTime = newExpiry
+            }
+
+            DataResult.Success(UserData(id = userId, role = role))
         }
     }
 

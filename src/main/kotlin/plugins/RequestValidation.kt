@@ -13,13 +13,27 @@ import io.ktor.server.application.*
 import io.ktor.server.plugins.requestvalidation.*
 import kotlin.enums.enumEntries
 
+private const val MIN_PASSWORD_LENGTH = 12
+private const val MAX_PASSWORD_LENGTH = 72
+
+private fun isStrongPassword(password: String): Boolean {
+    if (password.length !in MIN_PASSWORD_LENGTH..MAX_PASSWORD_LENGTH) return false
+    val hasLower = password.any { it.isLowerCase() }
+    val hasUpper = password.any { it.isUpperCase() }
+    val hasDigit = password.any { it.isDigit() }
+    val hasSpecial = password.any { !it.isLetterOrDigit() }
+    return listOf(hasLower, hasUpper, hasDigit, hasSpecial).count { it } >= 3
+}
+
 fun Application.configureRequestValidation() {
     val emailPattern = Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+[a-zA-Z]{2,}$")
     install(RequestValidation) {
         validate<CreateUserRequest> { request ->
             when {
                 request.email.isEmpty() || !emailPattern.matches(request.email) -> invalidResponseResult("Invalid email or password")
-                request.password.isEmpty() -> invalidResponseResult("Invalid email or password")
+                !isStrongPassword(request.password) -> invalidResponseResult(
+                    "Password must be $MIN_PASSWORD_LENGTH-$MAX_PASSWORD_LENGTH characters and include at least 3 of: lowercase, uppercase, digit, special character"
+                )
                 else -> ValidationResult.Valid
             }
         }

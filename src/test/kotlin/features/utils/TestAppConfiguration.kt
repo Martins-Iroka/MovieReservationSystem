@@ -1,5 +1,6 @@
 package features.utils
 
+import com.martdev.plugins.configureRateLimiter
 import com.martdev.plugins.configureRequestValidation
 import com.martdev.plugins.configureSecurity
 import com.martdev.plugins.configureSerialization
@@ -16,6 +17,7 @@ inline fun Application.testAppConfiguration(module: Module, crossinline block: R
     configureSerialization()
     configureStatusPages()
     configureSecurity()
+    configureRateLimiter()
     configureRequestValidation()
     routing {
         block()

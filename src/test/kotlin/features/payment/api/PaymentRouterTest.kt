@@ -32,7 +32,7 @@ class PaymentRouterTest {
     @MockK
     private lateinit var paymentService: PaymentService
 
-    private val jwtConfig = JWTConfig()
+    private val jwtConfig = JWTConfig("test", 15, "iss", "aud")
     private val jwt = JWTAuthImpl(jwtConfig)
     private val userToken = jwt.generateAccessToken("2", "USER")
     private val adminToken = jwt.generateAccessToken("1", "ADMIN")

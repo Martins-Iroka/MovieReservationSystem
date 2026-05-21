@@ -6,11 +6,4 @@ data class UserData(
     val password: String = "",
     val isVerified: Boolean = false,
     val role: Role = Role.USER,
-    val emailId: String = "",
-    val status: String = "",
-    val code: String = "",
-    val registrationToken: String = "",
-    val accessToken: String = "",
-    val refreshToken: String = "",
-    val verificationToken: String = "",
 )

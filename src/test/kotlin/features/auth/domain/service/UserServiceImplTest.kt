@@ -1,7 +1,10 @@
 package com.martdev.features.auth.domain.service
 
+import com.martdev.features.auth.domain.model.Credentials
 import com.martdev.features.auth.domain.model.Role
 import com.martdev.features.auth.domain.model.UserData
+import com.martdev.features.auth.domain.model.VerificationInput
+import com.martdev.features.auth.domain.observability.AuthEvents
 import com.martdev.features.auth.domain.repository.UserRepository
 import com.martdev.features.auth.domain.security.Auth
 import com.martdev.features.auth.domain.security.OTPProvider
@@ -18,11 +21,13 @@ import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import io.mockk.slot
 import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.LocalDateTime
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 @ExtendWith(MockKExtension::class)
@@ -40,474 +45,322 @@ class UserServiceImplTest {
     @MockK
     private lateinit var passwordHasher: PasswordHasher
 
+    @MockK(relaxed = true)
+    private lateinit var events: AuthEvents
+
     private lateinit var service: UserService
 
     @BeforeEach
     fun setup() {
-        service = UserServiceImpl(repository, otpProvider, auth, passwordHasher)
+        service = UserServiceImpl(repository, otpProvider, auth, passwordHasher, events)
     }
 
-    private val user = UserData(
+    private val credentials = Credentials(email = "test@email.com", password = "Password123!")
+    private val savedUser = UserData(
         id = 1,
         email = "test@email.com",
-        password = "password",
+        password = "hashed_password",
         role = Role.USER,
-        code = "123456",
-        emailId = "emailId",
-        registrationToken = "token",
         isVerified = true,
-        refreshToken = "refresh_token"
     )
-
     private val hashedPassword = "hashed_password"
 
     @Test
-    fun `should register user successfully`() = runTest {
+    fun `registerUser hashes password, hashes registration token, sends OTP and returns plain token`() = runTest {
+        val savedUserSlot = slot<UserData>()
+        val storedTokenSlot = slot<String>()
 
-        val userSlot = slot<UserData>()
-        val otpSlot = slot<String>()
-
-        every {
-            passwordHasher.hashPassword(any())
-        } returns hashedPassword
-
+        every { passwordHasher.hashPassword(credentials.password) } returns hashedPassword
         coEvery {
-            repository.saveUserAndVerificationToken(capture(userSlot), any())
-        } answers {
-            assertEquals(user.email, userSlot.captured.email)
-            assertEquals(hashedPassword, userSlot.captured.password)
-            DataResult.Success(
-                user
-            )
-        }
+            repository.saveUserAndVerificationToken(capture(savedUserSlot), capture(storedTokenSlot))
+        } returns DataResult.Success(savedUser)
+        coEvery { otpProvider.sendVerificationCode(savedUser.email) } returns Pair("emailId-from-stytch", "")
 
-        coEvery {
-            otpProvider.sendVerificationCode(capture(otpSlot))
-        } answers {
-            assertEquals(user.email, otpSlot.captured)
-            Pair("emailId", "")
-        }
+        val result = service.registerUser(credentials)
 
-        val result = service.registerUser(user)
-
-        assertEquals("emailId", result.emailId)
-        assertTrue(result.registrationToken.isNotEmpty())
+        assertEquals(credentials.email, savedUserSlot.captured.email)
+        assertEquals(hashedPassword, savedUserSlot.captured.password)
+        assertEquals(64, storedTokenSlot.captured.length)
+        assertTrue(storedTokenSlot.captured.matches(Regex("^[0-9a-f]+$")))
+        assertNotEquals(result.registrationToken, storedTokenSlot.captured)
+        assertEquals("emailId-from-stytch", result.emailId)
+        coVerify { events.registerSucceeded(savedUser.id) }
     }
 
     @Test
-    fun `should throw bad request exception for duplicate email or username`() = runTest {
-        every {
-            passwordHasher.hashPassword(any())
-        } returns hashedPassword
-
+    fun `registerUser throws BadRequestException on duplicate email`() = runTest {
+        every { passwordHasher.hashPassword(any()) } returns hashedPassword
         coEvery {
             repository.saveUserAndVerificationToken(any(), any())
         } returns DataResult.Failure.UniqueViolation
 
-        val exception = assertFailsWith<BadRequestException> {
-            service.registerUser(user)
-        }
-
+        val exception = assertFailsWith<BadRequestException> { service.registerUser(credentials) }
         assertEquals("Duplicate email", exception.error)
     }
 
     @Test
-    fun `should throw internal server exception for unknown db error`() = runTest {
-        every {
-            passwordHasher.hashPassword(any())
-        } returns hashedPassword
-
+    fun `registerUser throws InternalServerException on unknown db error`() = runTest {
+        every { passwordHasher.hashPassword(any()) } returns hashedPassword
         coEvery {
             repository.saveUserAndVerificationToken(any(), any())
         } returns DataResult.Failure.UnknownError("error")
 
-        val internalServerException = assertFailsWith<InternalServerException> {
-            service.registerUser(user)
-        }
-
-        assertEquals("The server encountered a problem", internalServerException.error)
+        assertFailsWith<InternalServerException> { service.registerUser(credentials) }
     }
 
     @Test
-    fun `should throw internal server exception for otp error`() = runTest {
-        every {
-            passwordHasher.hashPassword(any())
-        } returns hashedPassword
-
+    fun `registerUser throws InternalServerException and reports otp send failure when Stytch fails`() = runTest {
+        every { passwordHasher.hashPassword(any()) } returns hashedPassword
         coEvery {
             repository.saveUserAndVerificationToken(any(), any())
-        } returns DataResult.Success(
-            user
-        )
+        } returns DataResult.Success(savedUser)
+        coEvery { otpProvider.sendVerificationCode(any()) } returns Pair("", "error")
 
-        coEvery {
-            otpProvider.sendVerificationCode(any())
-        } returns Pair("", "error")
-
-        val internalServerException = assertFailsWith<InternalServerException> {
-            service.registerUser(user)
-        }
-
-        assertEquals("Failed to send OTP", internalServerException.error)
+        val exception = assertFailsWith<InternalServerException> { service.registerUser(credentials) }
+        assertEquals("Failed to send OTP", exception.error)
+        coVerify { events.otpSendFailed() }
     }
 
     @Test
-    fun `should request user verification then returns user verification response`() = runTest {
+    fun `verifyUser hashes registration token before activation`() = runTest {
+        val activationTokenSlot = slot<String>()
+        val plainToken = "registration-token-uuid"
+        val input = VerificationInput(code = "123456", emailId = "emailId", registrationToken = plainToken)
 
-        val emailIdSlot = slot<String>()
-        val codeSlot = slot<String>()
-        val tokenSlot = slot<String>()
+        coEvery { otpProvider.verifyCode(input.emailId, input.code) } returns Pair(true, "")
+        coEvery { repository.activateUser(capture(activationTokenSlot)) } returns DataResult.Success(Unit)
 
-        coEvery {
-            otpProvider.verifyCode(capture(emailIdSlot), capture(codeSlot))
-        } answers {
-            assertEquals(user.code, codeSlot.captured)
-            assertEquals(user.emailId, emailIdSlot.captured)
-            Pair(true, "")
-        }
+        service.verifyUser(input)
 
-        coEvery {
-            repository.activateUser(capture(tokenSlot))
-        } answers {
-            assertEquals(user.registrationToken, tokenSlot.captured)
-            DataResult.Success(Unit)
-        }
-
-        service.verifyUser(user)
+        assertEquals(64, activationTokenSlot.captured.length)
+        assertTrue(activationTokenSlot.captured.matches(Regex("^[0-9a-f]+$")))
+        assertNotEquals(plainToken, activationTokenSlot.captured)
     }
 
     @Test
-    fun `should throw bad request exception for failed otp verification`() = runTest {
+    fun `verifyUser throws BadRequestException on OTP rejection`() = runTest {
+        val input = VerificationInput(code = "000000", emailId = "emailId", registrationToken = "any")
+        coEvery { otpProvider.verifyCode(any(), any()) } returns Pair(false, "stytch_invalid_code")
 
-        coEvery {
-            otpProvider.verifyCode(any(), any())
-        } returns Pair(false, "error")
-
-        val exception = assertFailsWith<BadRequestException> {
-            service.verifyUser(user)
-        }
-
+        val exception = assertFailsWith<BadRequestException> { service.verifyUser(input) }
         assertEquals("Invalid or expired OTP", exception.error)
+        coVerify { events.verifyFailed("otp_invalid") }
     }
 
     @Test
-    fun `should throw not found exception when activating user`() = runTest {
+    fun `verifyUser throws NotFoundException when token not found`() = runTest {
+        val input = VerificationInput("123456", "emailId", "any")
+        coEvery { otpProvider.verifyCode(any(), any()) } returns Pair(true, "")
+        coEvery { repository.activateUser(any()) } returns DataResult.Failure.NotFound()
 
-        coEvery {
-            otpProvider.verifyCode(any(), any())
-        } returns Pair(true, "")
-
-        coEvery {
-            repository.activateUser(any())
-        } returns DataResult.Failure.NotFound()
-
-        val exception = assertFailsWith<NotFoundException> {
-            service.verifyUser(user)
-        }
-
+        val exception = assertFailsWith<NotFoundException> { service.verifyUser(input) }
         assertEquals("Invalid or expired verification token", exception.error)
     }
 
     @Test
-    fun `should throw internal server exception when activating user`() = runTest {
-        coEvery {
-            otpProvider.verifyCode(any(), any())
-        } returns Pair(true, "")
+    fun `verifyUser throws InternalServerException on other repo failures`() = runTest {
+        val input = VerificationInput("123456", "emailId", "any")
+        coEvery { otpProvider.verifyCode(any(), any()) } returns Pair(true, "")
+        coEvery { repository.activateUser(any()) } returns DataResult.Failure.UnknownError("error")
 
-        coEvery {
-            repository.activateUser(any())
-        } returns DataResult.Failure.UnknownError("error")
-
-        val exception = assertFailsWith<InternalServerException> {
-            service.verifyUser(user)
-        }
-
-        assertEquals("An error occurred during verification", exception.error)
+        assertFailsWith<InternalServerException> { service.verifyUser(input) }
     }
 
-    private val accessToken = "accessToken"
-    private val refreshToken = "refreshToken"
+    @Test
+    fun `loginUser issues tokens, persists hashed refresh token, returns plain refresh token`() = runTest {
+        val storedHashSlot = slot<String>()
+        val expirySlot = slot<LocalDateTime>()
+        val accessTokenValue = "access-token-value"
+        val refreshTokenValue = "refresh-token-value"
+
+        coEvery { repository.getUserByEmail(credentials.email) } returns DataResult.Success(savedUser)
+        every { passwordHasher.verifyPassword(credentials.password, savedUser.password) } returns true
+        every { auth.generateAccessToken(savedUser.id.toString(), savedUser.role.name) } returns accessTokenValue
+        every { auth.generateRefreshToken() } returns refreshTokenValue
+        coEvery {
+            repository.saveRefreshToken(eq(savedUser.id), capture(storedHashSlot), capture(expirySlot))
+        } returns DataResult.Success(Unit)
+
+        val result = service.loginUser(credentials)
+
+        assertEquals(savedUser.id, result.userId)
+        assertEquals(accessTokenValue, result.accessToken)
+        assertEquals(refreshTokenValue, result.refreshToken)
+        assertEquals(64, storedHashSlot.captured.length)
+        assertNotEquals(refreshTokenValue, storedHashSlot.captured)
+        coVerify { events.loginSucceeded(savedUser.id) }
+    }
 
     @Test
-    fun `should login user successfully`() = runTest {
-        val emailSlot = slot<String>()
-        val userIdSlot = slot<String>()
+    fun `loginUser returns generic Invalid email or password for unknown email`() = runTest {
+        coEvery { repository.getUserByEmail(any()) } returns DataResult.Failure.NotFound()
 
+        val exception = assertFailsWith<BadRequestException> { service.loginUser(credentials) }
+
+        assertEquals("Invalid email or password", exception.error)
+        coVerify { events.loginFailed("unknown_email") }
+    }
+
+    @Test
+    fun `loginUser returns generic Invalid email or password for unverified account (no enumeration leak)`() = runTest {
+        coEvery { repository.getUserByEmail(any()) } returns DataResult.Success(savedUser.copy(isVerified = false))
+
+        val exception = assertFailsWith<BadRequestException> { service.loginUser(credentials) }
+
+        assertEquals("Invalid email or password", exception.error)
+        coVerify { events.loginFailed("unverified") }
+    }
+
+    @Test
+    fun `loginUser returns generic Invalid email or password for wrong password`() = runTest {
+        coEvery { repository.getUserByEmail(any()) } returns DataResult.Success(savedUser)
+        every { passwordHasher.verifyPassword(any(), any()) } returns false
+
+        val exception = assertFailsWith<BadRequestException> { service.loginUser(credentials) }
+
+        assertEquals("Invalid email or password", exception.error)
+        coVerify { events.loginFailed("wrong_password") }
+    }
+
+    @Test
+    fun `loginUser does not check password for unverified user`() = runTest {
+        coEvery { repository.getUserByEmail(any()) } returns DataResult.Success(savedUser.copy(isVerified = false))
+
+        assertFailsWith<BadRequestException> { service.loginUser(credentials) }
+
+        coVerify(exactly = 0) { passwordHasher.verifyPassword(any(), any()) }
+    }
+
+    @Test
+    fun `loginUser throws InternalServerException on db lookup failure`() = runTest {
+        coEvery { repository.getUserByEmail(any()) } returns DataResult.Failure.UnknownError("error")
+
+        assertFailsWith<InternalServerException> { service.loginUser(credentials) }
+    }
+
+    @Test
+    fun `loginUser throws NotFoundException when saving refresh token reports user not found`() = runTest {
+        coEvery { repository.getUserByEmail(any()) } returns DataResult.Success(savedUser)
+        every { passwordHasher.verifyPassword(any(), any()) } returns true
+        every { auth.generateAccessToken(any(), any()) } returns "access"
+        every { auth.generateRefreshToken() } returns "refresh"
+        coEvery { repository.saveRefreshToken(any(), any(), any()) } returns DataResult.Failure.NotFound()
+
+        assertFailsWith<NotFoundException> { service.loginUser(credentials) }
+    }
+
+    @Test
+    fun `refreshToken rotates the refresh token atomically via repository`() = runTest {
+        val oldRefreshHashSlot = slot<String>()
+        val newRefreshHashSlot = slot<String>()
+        val newAccessToken = "new-access"
+        val newRefreshToken = "new-refresh"
+
+        every { auth.generateRefreshToken() } returns newRefreshToken
+        every { auth.generateAccessToken(savedUser.id.toString(), savedUser.role.name) } returns newAccessToken
         coEvery {
-            repository.getUserByEmail(capture(emailSlot))
-        } answers {
-            assertEquals(user.email, emailSlot.captured)
-            DataResult.Success(
-                user
+            repository.rotateRefreshToken(
+                oldTokenHash = capture(oldRefreshHashSlot),
+                newTokenHash = capture(newRefreshHashSlot),
+                newExpiry = any(),
             )
-        }
+        } returns DataResult.Success(savedUser)
 
-        coEvery {
-            passwordHasher.verifyPassword(any(), any())
-        } returns true
+        val result = service.refreshToken("original-refresh-token")
 
-        every {
-            auth.generateAccessToken(capture(userIdSlot), any())
-        } answers {
-            assertEquals("1", userIdSlot.captured)
-            accessToken
-        }
-
-        every {
-            auth.generateRefreshToken()
-        } returns refreshToken
-
-        coEvery {
-            repository.saveRefreshToken(any(), any(), any())
-        } returns DataResult.Success(Unit)
-
-        val response = service.loginUser(user)
-
-        assertEquals(accessToken, response.accessToken)
-        assertEquals(refreshToken, response.refreshToken)
+        assertEquals(newAccessToken, result.accessToken)
+        assertEquals(newRefreshToken, result.refreshToken)
+        assertEquals(64, oldRefreshHashSlot.captured.length)
+        assertEquals(64, newRefreshHashSlot.captured.length)
+        assertNotEquals(oldRefreshHashSlot.captured, newRefreshHashSlot.captured)
+        coVerify { events.refreshSucceeded(savedUser.id) }
     }
 
-
     @Test
-    fun `should throw bad request exception for get user by email`() = runTest {
+    fun `refreshToken throws UnauthorizedException for revoked or unknown token`() = runTest {
+        every { auth.generateRefreshToken() } returns "new"
         coEvery {
-            repository.getUserByEmail(any())
+            repository.rotateRefreshToken(any(), any(), any())
         } returns DataResult.Failure.NotFound()
 
-        val exception = assertFailsWith<BadRequestException> { service.loginUser(user) }
-
-        assertEquals("Invalid email or password", exception.error)
-
+        assertFailsWith<UnauthorizedException> { service.refreshToken("anything") }
+        coVerify { events.refreshFailed("unknown_or_revoked") }
     }
 
     @Test
-    fun `should throw internal server exception for get user by email`() = runTest {
+    fun `refreshToken throws InternalServerException on other repo failures`() = runTest {
+        every { auth.generateRefreshToken() } returns "new"
         coEvery {
-            repository.getUserByEmail(any())
+            repository.rotateRefreshToken(any(), any(), any())
         } returns DataResult.Failure.UnknownError("error")
 
-        assertFailsWith<InternalServerException> { service.loginUser(user) }
+        assertFailsWith<InternalServerException> { service.refreshToken("anything") }
     }
 
     @Test
-    fun `should throw bad request exception for incorrect password`() = runTest {
-        coEvery {
-            repository.getUserByEmail(any())
-        } returns DataResult.Success(
-            user
-        )
+    fun `deleteExpiredRefreshToken delegates to repository`() = runTest {
+        coEvery { repository.deleteExpiredRefreshToken() } returns DataResult.Success(Unit)
 
-        every {
-            passwordHasher.verifyPassword(any(), any())
-        } returns false
+        service.deleteExpiredRefreshToken()
 
-        val exception = assertFailsWith<BadRequestException> {
-            service.loginUser(user)
-        }
-
-        assertEquals("Invalid email or password", exception.error)
+        coVerify { repository.deleteExpiredRefreshToken() }
     }
 
     @Test
-    fun `should throw unauthorized exception for unverified user`() = runTest {
+    fun `resendOTP returns new emailId and plain token, persists hashed token`() = runTest {
+        val persistedHashSlot = slot<String>()
+        val emailIdValue = "new-email-id"
 
+        coEvery { repository.getUserByEmail(any()) } returns DataResult.Success(savedUser.copy(isVerified = false))
+        coEvery { otpProvider.sendVerificationCode(savedUser.email) } returns Pair(emailIdValue, "")
         coEvery {
-            repository.getUserByEmail(any())
-        } returns DataResult.Success(
-            user.copy(isVerified = false)
-        )
-
-        coEvery {
-            passwordHasher.verifyPassword(any(), any())
-        } returns true
-
-        val exception = assertFailsWith<UnauthorizedException> {
-            service.loginUser(user)
-        }
-
-        assertEquals("Please verify your email before logging in", exception.error)
-    }
-
-    @Test
-    fun `should throw not found exception when saving refresh token`() = runTest {
-
-        coEvery {
-            repository.getUserByEmail(any())
-        } returns DataResult.Success(
-            user
-        )
-
-        coEvery {
-            passwordHasher.verifyPassword(any(), any())
-        } returns true
-
-        every {
-            auth.generateAccessToken(any(), any())
-        } returns accessToken
-
-        every {
-            auth.generateRefreshToken()
-        } returns refreshToken
-
-        coEvery {
-            repository.saveRefreshToken(any(), any(), any())
-        } returns DataResult.Failure.NotFound()
-
-        assertFailsWith<NotFoundException> {
-            service.loginUser(user)
-        }
-    }
-
-    @Test
-    fun `should throw internal server exception when saving refresh token`() = runTest {
-
-        coEvery {
-            repository.getUserByEmail(any())
-        } returns DataResult.Success(
-            user
-        )
-
-        coEvery {
-            passwordHasher.verifyPassword(any(), any())
-        } returns true
-
-        every {
-            auth.generateAccessToken(any(), any())
-        } returns accessToken
-
-        every {
-            auth.generateRefreshToken()
-        } returns refreshToken
-
-        coEvery {
-            repository.saveRefreshToken(any(), any(), any())
-        } returns DataResult.Failure.UnknownError("error")
-
-        assertFailsWith<InternalServerException> {
-            service.loginUser(user)
-        }
-    }
-
-    @Test
-    fun `should refresh token successfully`() = runTest {
-        coEvery {
-            repository.getUserIdAndRoleByRefreshToken(any())
-        } returns DataResult.Success(user)
-
-        coEvery {
-            repository.revokeRefreshToken(any())
+            repository.deleteAndCreateVerificationToken(capture(persistedHashSlot), savedUser.id)
         } returns DataResult.Success(Unit)
 
-        every {
-            auth.generateAccessToken(any(), any())
-        } returns accessToken
+        val result = service.resendOTP(savedUser.email)
 
-        every {
-            auth.generateRefreshToken()
-        } returns refreshToken
-
-        coEvery {
-            repository.saveRefreshToken(any(), any(), any())
-        } returns DataResult.Success(Unit)
-
-        val response = service.refreshToken("")
-
-        assertEquals(accessToken, response.accessToken)
-        assertEquals(refreshToken, response.refreshToken)
+        assertEquals(emailIdValue, result.emailId)
+        assertEquals(64, persistedHashSlot.captured.length)
+        assertNotEquals(result.verificationToken, persistedHashSlot.captured)
+        coVerify { events.otpResendSucceeded(savedUser.id) }
     }
 
     @Test
-    fun `should throw unauthorized exception when getting user id by refresh token`() = runTest {
+    fun `resendOTP returns empty body for unknown email`() = runTest {
+        coEvery { repository.getUserByEmail(any()) } returns DataResult.Failure.NotFound()
 
-        coEvery {
-            repository.getUserIdAndRoleByRefreshToken(any())
-        } returns DataResult.Failure.NotFound()
+        val result = service.resendOTP("ghost@example.com")
 
-        assertFailsWith<UnauthorizedException> {
-            service.refreshToken("")
-        }
+        assertEquals("", result.emailId)
+        assertEquals("", result.verificationToken)
+        coVerify(exactly = 0) { otpProvider.sendVerificationCode(any()) }
     }
 
     @Test
-    fun `should delete expired refresh token`() = runTest {
-        coEvery {
-            repository.deleteExpiredRefreshToken()
-        } returns DataResult.Success(Unit)
+    fun `resendOTP returns empty body on db lookup failure`() = runTest {
+        coEvery { repository.getUserByEmail(any()) } returns DataResult.Failure.UnknownError("error")
 
-        repository.deleteExpiredRefreshToken()
+        val result = service.resendOTP("any")
 
-        coVerify {
-            repository.deleteExpiredRefreshToken()
-        }
+        assertEquals("", result.emailId)
+        assertEquals("", result.verificationToken)
     }
 
     @Test
-    fun `should resend otp successfully`() = runTest {
+    fun `resendOTP throws BadRequestException for already-verified user`() = runTest {
+        coEvery { repository.getUserByEmail(any()) } returns DataResult.Success(savedUser)
 
-        coEvery {
-            repository.getUserByEmail(any())
-        } returns DataResult.Success(
-            user.copy(isVerified = false)
-        )
-
-        coEvery {
-            otpProvider.sendVerificationCode(any())
-        } returns Pair("emailId", "")
-
-        coEvery {
-            repository.deleteAndCreateVerificationToken(any(), any())
-        } returns DataResult.Success(Unit)
-
-        val response = service.resendOTP("")
-
-        assertEquals("emailId", response.emailId)
-        assertTrue(response.verificationToken.isNotEmpty())
-    }
-
-    @Test
-    fun `should return na parameter for db failed request to get user by email`() = runTest {
-
-        coEvery {
-            repository.getUserByEmail(any())
-        } returns DataResult.Failure.UnknownError("error")
-
-        val response = service.resendOTP("")
-
-        assertEquals("N/A", response.emailId)
-        assertEquals("N/A", response.verificationToken)
-    }
-
-    @Test
-    fun `should throw bad request exception when a verified user request for otp`() = runTest {
-        coEvery {
-            repository.getUserByEmail(any())
-        } returns DataResult.Success(
-            user
-        )
-
-        val exception = assertFailsWith<BadRequestException> {
-            service.resendOTP("")
-        }
-
+        val exception = assertFailsWith<BadRequestException> { service.resendOTP(savedUser.email) }
         assertEquals("User is already verified", exception.error)
     }
 
     @Test
-    fun `should throw internal server exception when otp provider fails to send code`() = runTest {
-        coEvery {
-            repository.getUserByEmail(any())
-        } returns DataResult.Success(
-            user.copy(isVerified = false)
-        )
+    fun `resendOTP throws InternalServerException when Stytch send fails`() = runTest {
+        coEvery { repository.getUserByEmail(any()) } returns DataResult.Success(savedUser.copy(isVerified = false))
+        coEvery { otpProvider.sendVerificationCode(any()) } returns Pair("", "error")
 
-        coEvery {
-            otpProvider.sendVerificationCode(any())
-        } returns Pair("", "error")
-
-        val exception = assertFailsWith<InternalServerException> {
-            service.resendOTP("")
-        }
-
+        val exception = assertFailsWith<InternalServerException> { service.resendOTP(savedUser.email) }
         assertEquals("Failed to resend OTP", exception.error)
+        coVerify { events.otpSendFailed() }
     }
 }

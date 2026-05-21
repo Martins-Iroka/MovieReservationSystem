@@ -37,7 +37,7 @@ class ReservationRouteTest {
     @MockK
     private lateinit var cancellationService: ReservationCancellationService
 
-    private val jwtConfig = JWTConfig()
+    private val jwtConfig = JWTConfig("test", 15, "iss", "aud")
 
     private val reservationModule = module {
         single { reservationService }

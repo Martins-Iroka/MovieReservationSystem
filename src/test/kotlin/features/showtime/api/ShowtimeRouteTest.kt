@@ -30,7 +30,7 @@ class ShowtimeRouteTest {
     @MockK
     private lateinit var service: ShowtimeService
 
-    private val jwtConfig = JWTConfig()
+    private val jwtConfig = JWTConfig("test", 15, "iss", "aud")
 
     private val showtimeModule = module {
         single { service }

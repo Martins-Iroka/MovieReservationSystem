@@ -7,40 +7,45 @@ import com.martdev.features.auth.api.response.CreateUserResponse
 import com.martdev.features.auth.api.response.RefreshTokenResponse
 import com.martdev.features.auth.api.response.ResendOTPResponse
 import com.martdev.features.auth.api.response.UserLoginResponse
-import com.martdev.features.auth.domain.model.UserData
+import com.martdev.features.auth.domain.model.Credentials
+import com.martdev.features.auth.domain.model.LoginResult
+import com.martdev.features.auth.domain.model.OtpResendResult
+import com.martdev.features.auth.domain.model.RefreshResult
+import com.martdev.features.auth.domain.model.RegistrationResult
+import com.martdev.features.auth.domain.model.VerificationInput
 
-fun CreateUserRequest.toUserData() = UserData(
+fun CreateUserRequest.toCredentials() = Credentials(
     email = email,
     password = password
 )
 
-fun UserData.toCreateUserResponse() = CreateUserResponse(
+fun RegistrationResult.toCreateUserResponse() = CreateUserResponse(
     emailId = emailId,
     token = registrationToken
 )
 
-fun UserVerificationRequest.toUserData() = UserData(
+fun UserVerificationRequest.toVerificationInput() = VerificationInput(
     code = code,
     emailId = emailId,
-    verificationToken = token
+    registrationToken = token
 )
 
-fun UserLoginRequest.toUserData() = UserData(
+fun UserLoginRequest.toCredentials() = Credentials(
     email = email,
     password = password
 )
 
-fun UserData.toUserLoginResponse() = UserLoginResponse(
+fun LoginResult.toUserLoginResponse() = UserLoginResponse(
     accessToken = accessToken,
     refreshToken = refreshToken
 )
 
-fun UserData.toRefreshTokenResponse() = RefreshTokenResponse(
+fun RefreshResult.toRefreshTokenResponse() = RefreshTokenResponse(
     accessToken = accessToken,
     refreshToken = refreshToken
 )
 
-fun UserData.toResendOTPResponse() = ResendOTPResponse(
+fun OtpResendResult.toResendOTPResponse() = ResendOTPResponse(
     emailId = emailId,
     verificationToken = verificationToken
 )
