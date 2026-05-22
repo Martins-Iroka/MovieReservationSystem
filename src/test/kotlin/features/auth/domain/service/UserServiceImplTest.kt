@@ -1,4 +1,4 @@
-package com.martdev.features.auth.domain.service
+package features.auth.domain.service
 
 import com.martdev.features.auth.domain.model.Credentials
 import com.martdev.features.auth.domain.model.Role
@@ -9,6 +9,8 @@ import com.martdev.features.auth.domain.repository.UserRepository
 import com.martdev.features.auth.domain.security.Auth
 import com.martdev.features.auth.domain.security.OTPProvider
 import com.martdev.features.auth.domain.security.PasswordHasher
+import com.martdev.features.auth.domain.service.UserService
+import com.martdev.features.auth.domain.service.UserServiceImpl
 import com.martdev.shared.domain.exception.BadRequestException
 import com.martdev.shared.domain.exception.InternalServerException
 import com.martdev.shared.domain.exception.NotFoundException

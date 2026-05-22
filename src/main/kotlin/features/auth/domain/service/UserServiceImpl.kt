@@ -1,12 +1,6 @@
 package com.martdev.features.auth.domain.service
 
-import com.martdev.features.auth.domain.model.Credentials
-import com.martdev.features.auth.domain.model.LoginResult
-import com.martdev.features.auth.domain.model.OtpResendResult
-import com.martdev.features.auth.domain.model.RefreshResult
-import com.martdev.features.auth.domain.model.RegistrationResult
-import com.martdev.features.auth.domain.model.UserData
-import com.martdev.features.auth.domain.model.VerificationInput
+import com.martdev.features.auth.domain.model.*
 import com.martdev.features.auth.domain.observability.AuthEvents
 import com.martdev.features.auth.domain.repository.UserRepository
 import com.martdev.features.auth.domain.security.Auth
@@ -22,8 +16,7 @@ import kotlinx.datetime.toLocalDateTime
 import org.koin.core.annotation.Single
 import org.slf4j.LoggerFactory
 import java.security.MessageDigest
-import java.util.HexFormat
-import java.util.UUID
+import java.util.*
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.hours
 
@@ -72,7 +65,7 @@ class UserServiceImpl(
             events.verifyFailed("otp_invalid")
             throw BadRequestException("Invalid or expired OTP")
         }
-        when (val result = repository.activateUser(sha256Hex(input.registrationToken))) {
+        when (repository.activateUser(sha256Hex(input.registrationToken))) {
             is DataResult.Success -> events.verifySucceeded(0)
             is DataResult.Failure.NotFound -> {
                 events.verifyFailed("token_not_found")
@@ -120,7 +113,7 @@ class UserServiceImpl(
                 val refreshTokenHash = sha256Hex(refreshToken)
                 val refreshExpiry = Clock.System.now().plus(24.hours).toLocalDateTime(TimeZone.UTC)
 
-                when (val saveResult = repository.saveRefreshToken(savedUser.id, refreshTokenHash, refreshExpiry)) {
+                when (repository.saveRefreshToken(savedUser.id, refreshTokenHash, refreshExpiry)) {
                     is DataResult.Success -> {
                         events.loginSucceeded(savedUser.id)
                         LoginResult(

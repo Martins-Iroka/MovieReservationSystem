@@ -8,6 +8,7 @@ import com.martdev.features.payment.domain.repository.PaymentRepository
 import com.martdev.features.payment.infrastructure.paystack.PaystackClient
 import com.martdev.features.payment.infrastructure.paystack.PaystackSignatureVerifier
 import com.martdev.features.payment.infrastructure.paystack.dto.PaystackWebhookEvent
+import com.martdev.features.payment.observability.PaymentEvents
 import com.martdev.features.reservation.domain.model.ReservationStatus
 import com.martdev.features.reservation.domain.service.ReservationService
 import com.martdev.shared.domain.exception.BadRequestException
@@ -24,6 +25,7 @@ import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
+//Implement payment events and check unit test is fine
 @Single
 class PaymentServiceImpl(
     private val paymentRepository: PaymentRepository,
@@ -31,6 +33,7 @@ class PaymentServiceImpl(
     private val paystackClient: PaystackClient,
     private val userRepository: UserRepository,
     private val config: PaystackConfig,
+    private val paymentEvents: PaymentEvents
 ) : PaymentService {
 
     private val log = LoggerFactory.getLogger(PaymentServiceImpl::class.java)
@@ -112,6 +115,7 @@ class PaymentServiceImpl(
             paystackTransactionId = data.id.takeIf { it > 0 }?.toString(),
             gatewayResponse = data.gatewayResponse,
             paidAtRaw = data.paidAt,
+            reservationId = payment.reservationId
         )
     }
 
@@ -137,6 +141,7 @@ class PaymentServiceImpl(
                     paystackTransactionId = data.id.takeIf { it > 0 }?.toString(),
                     gatewayResponse = data.gatewayResponse,
                     paidAtRaw = data.paidAt,
+                    reservationId = 0
                 )
             }
 
@@ -211,10 +216,23 @@ class PaymentServiceImpl(
         paystackTransactionId: String?,
         gatewayResponse: String?,
         paidAtRaw: String?,
+        reservationId: Long,
     ): Payment {
         val mappedStatus = when (paystackStatus.lowercase()) {
-            "success" -> PaymentStatus.SUCCESS
-            "failed", "reversed" -> PaymentStatus.FAILED
+            "success" -> {
+                paymentEvents.paymentSucceeded(reservationId, paystackAmount)
+                PaymentStatus.SUCCESS
+            }
+
+            "failed" -> {
+                paymentEvents.paymentFailed(reservationId, paystackStatus, gatewayResponse)
+                PaymentStatus.FAILED
+            }
+
+            "reversed" -> {
+                paymentEvents.refundProcessed(reservationId, paystackAmount)
+                PaymentStatus.REFUNDED
+            }
             "abandoned" -> PaymentStatus.ABANDONED
             else -> PaymentStatus.PENDING
         }

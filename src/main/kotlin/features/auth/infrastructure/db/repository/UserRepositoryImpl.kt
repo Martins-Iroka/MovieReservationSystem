@@ -1,5 +1,6 @@
 package com.martdev.features.auth.infrastructure.db.repository
 
+import com.martdev.features.auth.domain.model.Role
 import com.martdev.features.auth.domain.model.UserData
 import com.martdev.features.auth.domain.repository.UserRepository
 import com.martdev.features.auth.infrastructure.db.tables.*
@@ -70,19 +71,9 @@ class UserRepositoryImpl : UserRepository {
         newExpiry: LocalDateTime,
     ): DataResult<UserData> {
         return withSuspendTransaction {
-            val row = UserTable.join(
-                otherTable = UserRefreshTokenTable,
-                joinType = JoinType.INNER,
-                onColumn = UserTable.id,
-                otherColumn = UserRefreshTokenTable.userId
-            ).select(UserTable.id, UserTable.role).where {
-                (UserRefreshTokenTable.tokenHash eq oldTokenHash) and
-                        (UserRefreshTokenTable.expiresAt.greater(CurrentDateTime)) and
-                        (UserRefreshTokenTable.revoked eq false)
-            }.firstOrNull() ?: return@withSuspendTransaction DataResult.Failure.NotFound()
 
-            val userId = row[UserTable.id].value
-            val role = row[UserTable.role]
+            val (userId, role) = getUserIdAndRole(oldTokenHash)
+                ?: return@withSuspendTransaction DataResult.Failure.NotFound()
 
             val updatedRows = UserRefreshTokenTable.update({
                 (UserRefreshTokenTable.tokenHash eq oldTokenHash) and
@@ -134,19 +125,8 @@ class UserRepositoryImpl : UserRepository {
 
     override suspend fun getUserIdAndRoleByRefreshToken(tokenHash: String): DataResult<UserData> {
         return withSuspendTransaction {
-            val row = UserTable.join(
-                otherTable = UserRefreshTokenTable,
-                joinType = JoinType.INNER,
-                onColumn = UserTable.id,
-                otherColumn = UserRefreshTokenTable.userId
-            ).select(UserTable.id, UserTable.role).where {
-                (UserRefreshTokenTable.tokenHash eq tokenHash) and
-                        (UserRefreshTokenTable.expiresAt.greater(CurrentDateTime)) and
-                        (UserRefreshTokenTable.revoked eq false)
-            }.firstOrNull() ?: return@withSuspendTransaction DataResult.Failure.NotFound()
-
-            val userId = row[UserTable.id].value
-            val role = row[UserTable.role]
+            val (userId, role) = getUserIdAndRole(tokenHash)
+                ?: return@withSuspendTransaction DataResult.Failure.NotFound()
 
             DataResult.Success(UserData(id = userId, role = role))
         }
@@ -223,5 +203,27 @@ class UserRepositoryImpl : UserRepository {
 
     private fun deleteUser(userId: Long) = UserTable.deleteWhere {
         UserTable.id eq userId
+    }
+
+
+    private fun getUserIdAndRole(token: String): Pair<Long, Role>? {
+        val row = UserTable.join(
+            otherTable = UserRefreshTokenTable,
+            joinType = JoinType.INNER,
+            onColumn = UserTable.id,
+            otherColumn = UserRefreshTokenTable.userId
+        ).select(UserTable.id, UserTable.role).where {
+            (UserRefreshTokenTable.tokenHash eq token) and
+                    (UserRefreshTokenTable.expiresAt.greater(CurrentDateTime)) and
+                    (UserRefreshTokenTable.revoked eq false)
+        }.firstOrNull()
+
+        if (row == null) {
+            return null
+        }
+        val userId = row[UserTable.id].value
+        val role = row[UserTable.role]
+
+        return userId to role
     }
 }
