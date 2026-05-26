@@ -1,5 +1,6 @@
-package com.martdev.features.auth.infrastructure.security
+package features.auth.infrastructure.security
 
+import com.martdev.features.auth.infrastructure.security.PasswordHasherImpl
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

@@ -1,11 +1,12 @@
-package com.martdev.features.auth.infrastructure.security
+package features.auth.infrastructure.security
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.exceptions.SignatureVerificationException
 import com.martdev.config.JWTConfig
+import com.martdev.features.auth.infrastructure.security.JWTAuthImpl
 import org.junit.jupiter.api.Test
-import java.util.Base64
+import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotEquals

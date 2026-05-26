@@ -1,10 +1,11 @@
-package com.martdev.features.movies.infrastructure.repository
+package features.movies.infrastructure.repository
 
 import com.martdev.features.movies.domain.model.Genre
 import com.martdev.features.movies.domain.repository.GenreRepository
+import com.martdev.features.movies.infrastructure.repository.GenreRepositoryImpl
 import com.martdev.features.movies.infrastructure.tables.GenresTable
-import com.martdev.features.utils.PostgresContainer
 import com.martdev.shared.domain.model.DataResult
+import features.utils.PostgresContainer
 import kotlinx.coroutines.test.runTest
 import org.jetbrains.exposed.v1.jdbc.deleteAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction

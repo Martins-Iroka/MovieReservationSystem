@@ -6,8 +6,8 @@ import com.martdev.features.auth.infrastructure.db.repository.UserRepositoryImpl
 import com.martdev.features.auth.infrastructure.db.tables.UserRefreshTokenTable
 import com.martdev.features.auth.infrastructure.db.tables.UserTable
 import com.martdev.features.auth.infrastructure.db.tables.UserVerificationTable
-import com.martdev.features.utils.PostgresContainer
 import com.martdev.shared.domain.model.DataResult
+import features.utils.PostgresContainer
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone

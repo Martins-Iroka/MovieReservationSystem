@@ -17,8 +17,8 @@ import com.martdev.features.showtime.domain.model.ShowtimeStatus
 import com.martdev.features.showtime.domain.repository.ShowtimeRepository
 import com.martdev.features.showtime.infrastructure.db.repository.ShowtimeRepositoryImpl
 import com.martdev.features.showtime.infrastructure.db.table.ShowtimeTable
-import com.martdev.features.utils.PostgresContainer
 import com.martdev.shared.domain.model.DataResult
+import features.utils.PostgresContainer
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone

@@ -8,8 +8,8 @@ import com.martdev.features.room.infrastructure.db.repository.RoomRepositoryImpl
 import com.martdev.features.room.infrastructure.db.repository.SeatRepositoryImpl
 import com.martdev.features.room.infrastructure.db.tables.RoomTable
 import com.martdev.features.room.infrastructure.db.tables.SeatTable
-import com.martdev.features.utils.PostgresContainer
 import com.martdev.shared.domain.model.DataResult
+import features.utils.PostgresContainer
 import kotlinx.coroutines.test.runTest
 import org.jetbrains.exposed.v1.jdbc.deleteAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction

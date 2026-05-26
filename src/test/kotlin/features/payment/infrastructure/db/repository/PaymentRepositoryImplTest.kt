@@ -37,8 +37,8 @@ import com.martdev.features.showtime.domain.model.Showtime
 import com.martdev.features.showtime.domain.repository.ShowtimeRepository
 import com.martdev.features.showtime.infrastructure.db.repository.ShowtimeRepositoryImpl
 import com.martdev.features.showtime.infrastructure.db.table.ShowtimeTable
-import com.martdev.features.utils.PostgresContainer
 import com.martdev.shared.domain.model.DataResult
+import features.utils.PostgresContainer
 import kotlinx.coroutines.test.runTest
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.deleteAll

@@ -1,7 +1,9 @@
-package com.martdev.features.movies.domain.service.movie
+package features.movies.domain.service.movie
 
 import com.martdev.features.movies.domain.model.Movie
 import com.martdev.features.movies.domain.repository.MovieRepository
+import com.martdev.features.movies.domain.service.movie.MovieService
+import com.martdev.features.movies.domain.service.movie.MovieServiceImpl
 import com.martdev.shared.domain.exception.InternalServerException
 import com.martdev.shared.domain.exception.NotFoundException
 import com.martdev.shared.domain.model.DataResult

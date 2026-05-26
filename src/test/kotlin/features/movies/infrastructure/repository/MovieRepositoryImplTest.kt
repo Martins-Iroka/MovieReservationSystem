@@ -9,8 +9,8 @@ import com.martdev.features.movies.infrastructure.repository.MovieRepositoryImpl
 import com.martdev.features.movies.infrastructure.tables.GenresTable
 import com.martdev.features.movies.infrastructure.tables.MovieGenreTable
 import com.martdev.features.movies.infrastructure.tables.MoviesTable
-import com.martdev.features.utils.PostgresContainer
 import com.martdev.shared.domain.model.DataResult
+import features.utils.PostgresContainer
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month

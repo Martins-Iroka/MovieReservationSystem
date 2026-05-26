@@ -1,4 +1,4 @@
-package com.martdev.features.utils
+package features.utils
 
 import org.flywaydb.core.Flyway
 import org.jetbrains.exposed.v1.jdbc.Database

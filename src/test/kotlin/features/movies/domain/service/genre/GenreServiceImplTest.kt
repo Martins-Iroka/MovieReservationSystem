@@ -1,7 +1,9 @@
-package com.martdev.features.movies.domain.service.genre
+package features.movies.domain.service.genre
 
 import com.martdev.features.movies.domain.model.Genre
 import com.martdev.features.movies.domain.repository.GenreRepository
+import com.martdev.features.movies.domain.service.genre.GenreService
+import com.martdev.features.movies.domain.service.genre.GenreServiceImpl
 import com.martdev.shared.domain.model.DataResult
 import io.mockk.coEvery
 import io.mockk.coVerify

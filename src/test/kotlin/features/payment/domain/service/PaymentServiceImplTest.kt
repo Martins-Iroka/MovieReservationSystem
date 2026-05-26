@@ -11,6 +11,7 @@ import com.martdev.features.payment.infrastructure.paystack.PaystackClient
 import com.martdev.features.payment.infrastructure.paystack.dto.InitializeResponse
 import com.martdev.features.payment.infrastructure.paystack.dto.RefundResponse
 import com.martdev.features.payment.infrastructure.paystack.dto.VerifyResponse
+import com.martdev.features.payment.observability.PaymentEvents
 import com.martdev.features.reservation.domain.model.Reservation
 import com.martdev.features.reservation.domain.model.ReservationStatus
 import com.martdev.features.reservation.domain.service.ReservationService
@@ -33,7 +34,6 @@ import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
-import kotlin.test.assertTrue
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 
@@ -51,6 +51,9 @@ class PaymentServiceImplTest {
 
     @MockK
     private lateinit var userRepository: UserRepository
+
+    @MockK
+    private lateinit var paymentEvents: PaymentEvents
 
     private val webhookSecret = "sk_test_secret"
     private val config = PaystackConfig(
@@ -93,6 +96,7 @@ class PaymentServiceImplTest {
             paystackClient,
             userRepository,
             config,
+            paymentEvents
         )
     }
 
@@ -313,7 +317,7 @@ class PaymentServiceImplTest {
 
         val result = service.refundPaymentForReservation(reservationId)
 
-        assertTrue(result?.status == PaymentStatus.REFUND_PENDING)
+        assertEquals(result?.status, PaymentStatus.REFUND_PENDING)
         coVerify { paymentRepository.markRefundPending(storedReference) }
         coVerify { paystackClient.refundTransaction(storedReference, null) }
     }
